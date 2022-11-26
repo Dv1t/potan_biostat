@@ -1,0 +1,96 @@
+---
+title: "Project_pp2"
+author: "Kristina Zhur & Vitaly Dravgelis"
+date: "2022-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Загрузим необходимые пакеты.
+```{r}
+library(readr)
+library(readxl)
+library(dplyr)
+library(tibble)
+library(psych)
+library(tidyr)
+library(flextable)
+library(tibble)
+
+Sys.setlocale("LC_CTYPE", "russian")
+
+
+```
+
+Загрузим данные
+
+```{r}
+
+Data <- read_xlsx ("Data/Raw/2005.xlsx")
+str(Data)
+summary(Data)
+Data %>% as.tibble()
+```
+#Чистка данных
+
+1-й этап фильтрации: удаляем наблюдения по критериям исключения
+
+```{r}
+
+Data_clear_step1 <- Data %>% 
+  filter(!is.na(as.numeric(Data$`№ протокола`))) %>% 
+  filter(`пол`=='м' | `пол` == 'ж') %>%  
+  filter(!is.na(as.numeric(`гестация`)) & as.numeric(`гестация`)>=14) %>% 
+  mutate(`гестация`= as.numeric(`гестация`)) %>%
+  filter(is.na(`мацерация`) | `мацерация`=="нет") %>% 
+  filter(is.na(`ВПР`) | `ВПР` == "нет" | `ВПР` =="?") %>% 
+  filter(is.na(`СЗРП`)) %>% 
+  filter(`многоплодная` == "нет") 
+
+```
+
+Работаем со временем
+
+```{r}
+dd <- as.data.frame(Data_clear_step1$возраст)
+colnames(dd) <- c('время')
+dd$время <- gsub("г", "лет", dd$время)
+dd$время <- gsub(",", ".", dd$время)
+dd$time <- gsub("лет", "year", dd$время)
+dd$time <- gsub("мес", "month", dd$time)
+dd$time <- gsub("д", "day", dd$time)
+dd$time <- gsub("ч", "hour", dd$time)
+dd$time <- gsub("мин", "minute", dd$time)
+dd$time <- gsub("м", "month", dd$time)
+dd$time <- trimws(dd$time)
+
+dd$time_tot <- duration(dd$time)
+dd$time_seconds <- strsplit(as.character(dd$time_tot), 's')
+dd$time_seconds <- sapply(dd$time_seconds, head, 1)
+Data_clear_step1$возраст <- dd$time_seconds
+Data_clear_step1 <- Data_clear_step1 %>% 
+    filter(as.numeric(`возраст`) < (86400))  
+```
+
+2-й этап фильтрации:фильтруем по критериям: массы тела, делаем колонку "мёртвый/живой" бинарной
+
+```{r}
+Data_clear_step2 <- Data_clear_step1 %>% 
+  filter (`масса тела` < 5000) %>% 
+  mutate(`мёртвый/живой`= ifelse(`мёртвый/живой` == 'живой' | is.na(`мёртвый/живой`), 0, 1)) 
+
+```
+
+3-й этап фильтрации: работа с пропусками в данных (вес органов, длина/масса тела и др): удаляем пропуски
+
+```{r}
+Data_clear_step3 <- Data_clear_step2 %>% 
+  filter(!is.na(Data_clear_step2$`масса тела`),
+         !is.na(Data_clear_step2$сердце), 
+         !is.na(Data_clear_step2$печень), 
+         !is.na(Data_clear_step2$`окружность головы`), 
+         !is.na(Data_clear_step2$`окружность груди`),
+         !is.na(Data_clear_step2$`длина тела`))
+```
