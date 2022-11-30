@@ -17,20 +17,30 @@ data_2005 <- read_excel("2005.xlsx", col_names = TRUE)
 Ознакомление с БД
 
 ```{r}
+library(dplyr)
 library(gtsummary)
 data_2005 %>% glimpse()
 ```
 
-Предварительная чистка рабочего датасета
+```{r}
+work_dat <- data_2005 %>%
+  mutate(across(c(`пол`, `мёртвый/живой`, `мацерация`, `многоплодная`), ~ as.factor(.x)), across(c(`№ протокола`, `гестация`, `длина тела`, `масса тела`,`мозг`,`сердце`,`лёгкие`,`печень`,`селезёнка`,`почки`,`тимус`, `н/п`,`пжж`,`плацента`,`окружность головы`,`окружность груди` ), ~ as.numeric(.x))) %>% glimpse() #тип данных
+```
+
 
 ```{r }
-library(dplyr)
+#table(work_dat$`№ протокола`)
+#table(work_dat$пол)
+#table(work_dat$гестация)
+#table(work_dat$мацерация)
+#table(work_dat$многоплодная)
+#table(work_dat$ВПР)
+#table(work_dat$СЗРП)
 
-work_dat <- data_2005 %>%
+work_dat <- work_dat %>%
   filter(`пол` %in% c("м","ж")) %>% #без пола
-  filter (`№ протокола` != "НЕТ ПРОТОКОЛА") %>% #без протокола
-  mutate(across(c(`пол`, `мёртвый/живой`, `мацерация`, `многоплодная`), ~ as.factor(.x)), across(c(`№ протокола`, `гестация`, `длина тела`, `масса тела`,`мозг`,`сердце`,`лёгкие`,`печень`,`селезёнка`,`почки`,`тимус`, `н/п`,`пжж`,`плацента`,`окружность головы`,`окружность груди` ), ~ as.numeric(.x))) %>% #тип данных
-  filter (`гестация` >= 14) %>% #гестация < 14
+  filter (is.na(`№ протокола`) == FALSE) %>% #без протокола
+  mutate(`гестация` = ifelse(`гестация`== "нет данных", NA, `гестация`)) %>% filter (`гестация` >= 14) %>%  #гестация < 14
   filter (`мацерация` != "да") %>% #мацерация
   filter (`многоплодная` != "да") %>% #многоплодная
   filter (`ВПР` == "нет") %>% #врождённые пороки
@@ -38,13 +48,7 @@ work_dat <- data_2005 %>%
   
 work_dat %>% glimpse()
 
-str(work_dat)
-```
-
-```{r}
-library(lubridate)
-library(tidyr)
-library(tibble)
+#table(work_dat$`мёртвый/живой`)
 
 #Убираем строки с возрастом из колонки "мёртвый/живой"
 work_dat <- work_dat %>%
@@ -53,23 +57,7 @@ work_dat <- work_dat %>%
   mutate(`мёртвый/живой` = ifelse(`мёртвый/живой`!= "мертв", NA, "мертв")) %>%
   mutate(`мёртвый/живой` = as.factor(`мёртвый/живой`))
 
-#Работа с текстовым "возрастом"    
-work_dat$возраст <- gsub("г", "лет", work_dat$возраст)
-work_dat$возраст <- gsub("лет", "year", work_dat$возраст)
-work_dat$возраст <- gsub("мес", "month", work_dat$возраст)
-work_dat$возраст <- gsub("д", "day", work_dat$возраст)
-work_dat$возраст <- gsub("ч", "hour", work_dat$возраст)
-work_dat$возраст <- gsub("мин", "minute", work_dat$возраст)
-work_dat$возраст <- gsub("м", "month", work_dat$возраст)
+#table(work_dat$`мёртвый/живой`)
 
-work_dat <- work_dat %>% mutate(Age = ifelse(is.na(`мёртвый/живой`),duration(work_dat$возраст), 0)) #???`мёртвый/живой` == "мертв"
-work_dat <- work_dat %>% mutate(Возраст = strsplit(as.character(Age), 's')) %>%
-  mutate(Возраст = sapply(Возраст, head, 1)) 
-work_dat <- work_dat %>%  add_column(`Возраст (сут)` = as.numeric(work_dat$Возраст), .after = 4)
-work_dat$`Возраст (сут)` <- round(work_dat$`Возраст (сут)`/86400,4)
-
-#Наконец, фильтруем по возрасту
-work_dat <- work_dat %>% mutate(Age = NULL, Возраст = NULL) %>%
-  filter(`Возраст (сут)`<= 1)
+work_dat <- work_dat %>% filter(`мёртвый/живой`== "мертв") #фильтрация по возрасту
 ```
-
