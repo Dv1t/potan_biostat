@@ -1,0 +1,66 @@
+---
+title: "Patan_bioinf"
+author: "Кульгаева А."
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r data, include=FALSE}
+library(readxl)
+data_2005 <- read_excel("2005.xlsx", col_names = TRUE)
+```
+
+Ознакомление с БД
+
+```{r}
+library(dplyr)
+library(gtsummary)
+data_2005 %>% glimpse()
+str(work_dat)
+```
+
+Рабочая копия БД
+
+```{r}
+work_dat <- data_2005 %>%
+  mutate(across(c(`пол`, `мёртвый/живой`, `мацерация`, `многоплодная`), ~ as.factor(.x)), across(c(`№ протокола`, `гестация`, `длина тела`, `масса тела`,`мозг`,`сердце`,`лёгкие`,`печень`,`селезёнка`,`почки`,`тимус`, `н/п`,`пжж`,`плацента`,`окружность головы`,`окружность груди` ), ~ as.numeric(.x))) %>% glimpse() #тип данных
+```
+
+
+```{r }
+#table(work_dat$`№ протокола`)
+#table(work_dat$пол)
+#table(work_dat$гестация)
+#table(work_dat$мацерация)
+#table(work_dat$многоплодная)
+#table(work_dat$ВПР)
+#table(work_dat$СЗРП)
+
+work_dat <- work_dat %>%
+  filter(`пол` %in% c("м","ж")) %>% #без пола
+  filter (is.na(`№ протокола`) == FALSE) %>% #без протокола
+  mutate(`гестация` = ifelse(`гестация`== "нет данных", NA, `гестация`)) %>% filter (`гестация` >= 14) %>%  #гестация < 14
+  filter (`мацерация` != "да") %>% #мацерация
+  filter (`многоплодная` != "да") %>% #многоплодная
+  filter (`ВПР` == "нет") %>% #врождённые пороки
+  filter (is.na(`СЗРП`)) #СЗРП
+  
+work_dat %>% glimpse()
+
+#table(work_dat$`мёртвый/живой`)
+
+#Убираем строки с возрастом из колонки "мёртвый/живой"
+work_dat <- work_dat %>%
+  mutate(`мёртвый/живой` = as.character(`мёртвый/живой`)) %>%
+  mutate(`возраст` = ifelse(`мёртвый/живой`!= "мертв" & is.na(`мёртвый/живой`) == FALSE,`мёртвый/живой`,`возраст`)) %>% 
+  mutate(`мёртвый/живой` = ifelse(`мёртвый/живой`!= "мертв", NA, "мертв")) %>%
+  mutate(`мёртвый/живой` = as.factor(`мёртвый/живой`))
+
+#table(work_dat$`мёртвый/живой`)
+
+work_dat <- work_dat %>% filter(`мёртвый/живой`== "мертв") #фильтрация по возрасту
+```
