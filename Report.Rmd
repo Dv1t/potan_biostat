@@ -90,3 +90,23 @@ Data_05.varlab <- c("case" = "№ протокола",
                     "CC" = "окружность груди (Chest Circumference), см")
 ```
 
+```{r}
+Data_05 <- transform(Data_05,
+                     gndr = factor(gndr,
+                                   levels = c(1,2),
+                                   labels = c("m","f")),
+                     live = factor(live,
+                                   levels = c(0,1),
+                                   labels = c("live","still")),
+                     mac = factor(mac,
+                                  levels = c(0,1),
+                                  labels = c("no","yes")),
+                     MP = factor(MP,
+                                 levels = c(0,1),
+                                 labels = c("no","yes")),
+                     IUGR = factor(IUGR,
+                                   levels = c(0,1,2,3,4),
+                                   labels = c("no","IUGR","???","???","IUGR 3")))
+```
+
+
