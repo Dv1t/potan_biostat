@@ -1,0 +1,212 @@
+---
+title: "D2008"
+author: "Zhur"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+#Загрузим необходимые пакеты.
+library(readr)
+library(readxl)
+library(dplyr)
+library(tibble)
+library(psych)
+library(tidyr)
+library(flextable)
+library(tibble)
+library(lubridate)
+library(gtsummary)
+```
+```{r}
+#Загрузим данные
+#setwd("C:/Users/zhurk/OneDrive/Документы")
+#getwd()
+Data <- read_xlsx ("Data/Raw/2008.xlsx")
+#glimpse(Data)
+summary(Data)
+Data %>% as.tibble()
+```
+```{r}
+#Замена названий переменных на соответствующие названия на английском
+
+Data_en <- Data %>% rename(gender = "пол", still_live = "мёртвый/живой", age = "возраст",	
+case = "№ протокола", gest = "гестация", LB	= "длина тела", WB =	"масса тела", brain =	"мозг", heart = "сердце", lung	= "лёгкие", liver	= "печень", spleen	= "селезёнка", kidney =	"почки", thymus	= "тимус", adrenal = "н/п", pancreas = "пжж", placenta =	"плацента", mac	= "мацерация", CM	= "ВПР", MP = "многоплодная", IUGR	= "СЗРП", HC = "окружность головы", CC	= "окружность груди")
+View (Data_en)
+summary(Data_en)
+Data_en %>% as.tibble()
+
+```
+
+```{r}
+table(Data_en$gender, useNA = "always")
+table(Data_en$case, useNA = "always")
+
+# отбираем наблюдения с указанным полом "м" или "ж"  (-6 наблюдений)
+Data_step1 <- Data_en %>%
+    filter (case != "НЕТ ПРОТОКОЛА") %>%
+  filter(gender %in% c("м","ж"))
+
+```
+
+```{r}
+table(Data_step1$still_live, useNA = "always")
+table(Data_step1$age, useNA = "always")
+# заполняем значения NA в переменной age значениями из вектора still_live
+ Data_step1$age <-  coalesce (Data_step1$still_live,Data_step1$age)
+ 
+#создаем новую переменную age_new, в которой заменяем значение мертв на 0
+Data_step1 <- Data_step1 %>% 
+  add_column(age_new = NA, .after = 3) %>% 
+  mutate(age_new = ifelse(age == "мертв", "0 д", `age`))
+```
+
+```{r}
+#Приводим переменную age к одному типу, фильтруем по значению age < 86400 
+
+dd <- as.data.frame(Data_step1$age_new)
+colnames(dd) <- c('время')
+dd$время <- gsub("г", "лет", dd$время)
+dd$время <- gsub(",", ".", dd$время)
+dd$time <- gsub("лет", "year", dd$время)
+dd$time <- gsub("мес", "month", dd$time)
+dd$time <- gsub("дн", "day", dd$time)
+dd$time <- gsub("д", "day", dd$time)
+dd$time <- gsub("ч", "hour", dd$time)
+dd$time <- gsub("мин", "minute", dd$time)
+dd$time <- gsub("м", "month", dd$time)
+dd$time <- trimws(dd$time)
+
+
+dd$time_tot <- duration(dd$time)
+dd$time_seconds <- strsplit(as.character(dd$time_tot), 's')
+dd$time_seconds <- sapply(dd$time_seconds, head, 1)
+Data_step1$age_new <- dd$time_seconds
+Data_step1 <- Data_step1 %>% 
+    filter(as.numeric(age_new) <= (86400)) # на данном этапе остается 827 наблюдений
+```
+
+```{r}
+# Фильтрация по переменным "gest", "mac", "CM", "MP", IUGR 
+
+table(Data_step1$gest, useNA = "always")
+table(Data_step1$mac, useNA = "always") #удаляем 374 "да" и 5 NA
+table(Data_step1$CM, useNA = "always") # из оставшихся токлько 248 без CM
+table(Data_step1$IUGR, useNA = "always") # из оставшихся токлько 244 без IUGR
+table(Data_step1$MP, useNA = "always") # из оставшихся токлько 217 одноплодных
+summary(Data_step1$WB)
+
+Data_step2 <- Data_step1 %>% 
+  filter(mac == "нет") %>% 
+  filter(CM == "нет") %>% 
+  filter(is.na(IUGR)) %>% 
+  filter(is.na(MP)) 
+
+
+Data_step2$WB <- as.numeric(Data_step2$WB)
+summary(Data_step2$WB) #нет значений веса более 5000 г, фильтрация по этому показателю не требуется
+
+# фильтрация по неделям гестации
+table(Data_step2$gest, useNA = "always")
+Data_step2 <- Data_step2 %>% 
+   filter(!is.na(gest) & gest != "???" & gest != "оперативные" & gest != "срочные" & gest != "своевременные") # удаляем "своевременные, так как хоть по логике это >14 недель, но в модель нужно указать точное количество недель"
+#итого 188 наблюдений
+
+Data_step2$gest <- as.numeric(Data_step2$gest)
+Data_step2 <- Data_step2 %>% 
+   filter(!is.na(gest))
+
+#итого 107 наблюдений
+```
+```{r}
+#удаляем колонку age
+Data_step2 <- Data_step2[,-5]
+#переименовываем колонку  age_new в age_days, в колонке age_days присваеваем 1,  если значение отлично от 0
+Data_step2$age_new <- as.numeric(Data_step2$age_new)
+Data_step2 <- Data_step2 %>% rename(age_days = age_new)
+Data_step2 <- Data_step2 %>% mutate(age_days = ifelse(age_days == 0, 0, 1))
+```
+
+```{r}
+#приводим значения gender к стандартному виду на англ.языке
+as.tibble(Data_step2)
+Data_step2$gender <- as.factor(Data_step2$gender)
+Data_step2$still_live<- as.factor(Data_step2$still_live)
+table (Data_step2$gender)
+table (Data_step2$still_live)
+
+Data_step2 <- Data_step2 %>% 
+  mutate(gender = ifelse(gender == "м", "m", "f"))
+Data_step2$gender <- as.factor(Data_step2$gender)
+
+#приводим значения still_live к стандартному виду на англ.языке
+Data_step2$still_live <- as.character(Data_step2$still_live)
+Data_step2$still_live <- Data_step2$still_live %>% replace_na ("жив")
+
+Data_step2 <- Data_step2 %>% 
+  mutate(still_live = ifelse( still_live == "мертв", "still", "live"))
+
+#приводим значения CM и mac к стандартному виду на англ.языке
+table(Data_step2$mac, useNA = "always") 
+table(Data_step2$CM, useNA = "always") 
+table(Data_step2$IUGR, useNA = "always")
+table(Data_step2$MP, useNA = "always")
+
+Data_step2$CM<- as.character(Data_step2$CM)
+Data_step2$CM [Data_step2$CM == 'нет'] <- 'no'
+Data_step2$mac<- as.character(Data_step2$mac)
+Data_step2$mac [Data_step2$mac == 'нет'] <- 'no'
+Data_step2$MP <- as.character(Data_step2$MP)
+Data_step2$MP <- Data_step2$MP %>% replace_na ("no")
+Data_step2$IUGR <- as.character(Data_step2$IUGR)
+Data_step2$IUGR <- Data_step2$IUGR %>% replace_na ("no")
+
+```
+
+```{r}
+#приводим данные к соответствующим типам
+Data_step2 %>% as.tibble()
+
+# или так
+Data_step2$brain <- as.numeric(Data_step2$brain)
+Data_step2$heart <- as.numeric(Data_step2$heart)
+Data_step2$lung <- as.numeric(Data_step2$lung)
+Data_step2$liver <- as.numeric(Data_step2$liver)
+Data_step2$spleen <- as.numeric(Data_step2$spleen)
+Data_step2$kidney <- as.numeric(Data_step2$kidney)
+Data_step2$thymus <- as.numeric(Data_step2$thymus)
+Data_step2$adrenal <- as.numeric(Data_step2$adrenal)
+Data_step2$pancreas <- as.numeric(Data_step2$pancreas)
+Data_step2$placenta<- as.numeric(Data_step2$placenta)
+Data_step2$HC<- as.numeric(Data_step2$HC)
+Data_step2$CC<- as.numeric(Data_step2$CC)
+
+
+#округляем тип numeric до 2 знака
+Data_step2$brain <- round(Data_step2$brain, 2)
+Data_step2$heart <- round(Data_step2$heart, 2)
+Data_step2$lung <- round(Data_step2$lung, 2)
+Data_step2$liver <- round(Data_step2$liver, 2)
+Data_step2$spleen <- round(Data_step2$spleen, 2)
+Data_step2$kidney <- round(Data_step2$kidney, 2)
+Data_step2$thymus <- round(Data_step2$thymus, 2)
+Data_step2$adrenal <- round(Data_step2$adrenal, 2)
+Data_step2$pancreas <- round(Data_step2$pancreas, 2)
+Data_step2$placenta <- round(Data_step2$placenta, 2)
+Data_step2$HC <- round(Data_step2$HC, 2)
+Data_step2$CC <- round(Data_step2$CC, 2)
+
+#приводим типы для остальных переменных
+
+Data_step2 <-  Data_step2 %>%
+ mutate(across(c(gender, still_live, mac, CM, MP, IUGR), ~ as.factor(.x)), across(c(case, age_days, gest, LB, WB), ~ as.numeric(.x))) 
+
+
+write_rds(Data_step2, "Data/Raw/D2008.rds")
+summary(Data_step2)
+```
