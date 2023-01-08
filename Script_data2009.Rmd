@@ -149,6 +149,8 @@ Data_step2$CC <- round(Data_step2$CC, 2)
 Data_step2 <-  Data_step2 %>%
  mutate(across(c(gender, still_live, mac, CM, MP, IUGR), ~ as.factor(.x)), across(c(case, gest, age_days, gest, LB, WB), ~ as.numeric(.x))) 
 
+#добавляем колонку с годом
+Data_step2 <- Data_step2 %>% add_column(year = "2009", .before = 1)
 
 write_rds(Data_step2, "Data/Raw/D2009.rds") 
 write_csv(Data_step2, "Data/Raw/Data_clean_2009.csv")
