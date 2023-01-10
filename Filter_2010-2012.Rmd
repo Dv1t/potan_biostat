@@ -20,6 +20,7 @@ library(flextable)
 library(tibble)
 library(gtsummary)
 library(lubridate)
+library(openxlsx)
 
 Sys.setlocale("LC_CTYPE", "russian")
 ```
@@ -37,12 +38,11 @@ dat_12 <- read_excel("Data/Raw/2012.xlsx", col_names = TRUE)
 #dat_10 %>% glimpse()
 
 wd_10 <- dat_10
-names(wd_10) <- c("case","gndr","live","age","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC","wht")
+names(wd_10) <- c("case","gndr","live","ag","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC","wth")
 
 #СТРАННОСТЬ!!!
 #table(wd_10$wht)
-
-wd_10 <- wd_10 %>% mutate(CC = ifelse(is.na(wht) == T & case != 387 , CC, wht), wht = NULL)
+wd_10 <- wd_10 %>% mutate(wth = NULL)
 ####  
 
 #table(wd_10$case)
@@ -51,18 +51,20 @@ wd_10 <- wd_10 %>% mutate(CC = ifelse(is.na(wht) == T & case != 387 , CC, wht), 
 wd_10 <- wd_10 %>% mutate(gndr = ifelse(gndr == "ж", "f" , "m"))
 
 #table(wd_10$live)
+#ifelse(wd_10$live =="живой", print(wd_10$ag), NA)
 
-wd_10 <- wd_10 %>% mutate(age = ifelse(live %in% c("мертв","мертвый","мёртвый"), 0 , live)) %>%
-  mutate(live = ifelse(age == 0,"still","live"))
+wd_10 <- wd_10 %>% mutate(ag = ifelse(live %in% c("мертв","мертвый","мёртвый"), 0 , ifelse(live == "живой", ag, live))) %>%
+  mutate(live = ifelse(ag == 0,"still","live")) %>%
+  mutate(ag = ifelse(ag == "1", "1 сут",ag))
 
-#table(wd_10$age)
+#table(wd_10$ag)
 
-wd_10 <- wd_10 %>% mutate(age = ifelse(age == "живой", NA , age))
+wd_10 <- wd_10 %>% mutate(ag = ifelse(ag == "живой", NA , ag))
 
 #table(wd_10$gest)
 #table(wd_10$mac)
 
-wd_10 <- wd_10 %>% mutate(mac = ifelse(mac == "да", 1 , 0))
+wd_10 <- wd_10 %>% mutate(mac = ifelse(mac == "да", "yes" , "no"))
 
 #table(wd_10$CM)
 
@@ -92,67 +94,69 @@ wd_10 <- wd_10 %>%
   filter (is.na(case) == FALSE) %>% #без протокола
   filter(gndr %in% c("m","f")) #без пола
 
-#сей???
-table(wd_10$age)
+#сей?
+#table(wd_10$ag)
 
-wd_10$age <- gsub(",", ".", wd_10$age)
+wd_10$ag <- gsub(",", ".", wd_10$ag)
 
-wd_10$age <- gsub("лет", "г", wd_10$age)
-wd_10$age <- gsub("года", "г", wd_10$age)
-wd_10$age <- gsub("госа", "г", wd_10$age)
-wd_10$age <- gsub("г", "year", wd_10$age)
+wd_10$ag <- gsub("лет", "г", wd_10$ag)
+wd_10$ag <- gsub("года", "г", wd_10$ag)
+wd_10$ag <- gsub("госа", "г", wd_10$ag)
+wd_10$ag <- gsub("г", "year", wd_10$ag)
 
-wd_10$age <- gsub("час", "ч", wd_10$age)
-wd_10$age <- gsub("чов", "ч", wd_10$age)
-wd_10$age <- gsub("ча", "ч", wd_10$age)
-wd_10$age <- gsub("ч", "hour", wd_10$age)
+wd_10$ag <- gsub("час", "ч", wd_10$ag)
+wd_10$ag <- gsub("чов", "ч", wd_10$ag)
+wd_10$ag <- gsub("ча", "ч", wd_10$ag)
+wd_10$ag <- gsub("ч", "hour", wd_10$ag)
 
-wd_10$age <- gsub("минут", "мин", wd_10$age)
-wd_10$age <- gsub("мин.", "мин", wd_10$age)
-wd_10$age <- gsub("'", "мин", wd_10$age)
-wd_10$age <- gsub("мин", "minute", wd_10$age)
+wd_10$ag <- gsub("минут", "мин", wd_10$ag)
+wd_10$ag <- gsub("мин.", "мин", wd_10$ag)
+wd_10$ag <- gsub("'", "мин", wd_10$ag)
+wd_10$ag <- gsub("мин", "minute", wd_10$ag)
 
-wd_10$age <- gsub("месяца", "ме", wd_10$age)
-wd_10$age <- gsub("месяцев", "ме", wd_10$age)
-wd_10$age <- gsub("месяц", "ме", wd_10$age)
-wd_10$age <- gsub("мяцев", "ме", wd_10$age)
-wd_10$age <- gsub("мяца", "ме", wd_10$age)
-wd_10$age <- gsub("мев", "ме", wd_10$age)
-wd_10$age <- gsub("мес", "ме", wd_10$age)
-wd_10$age <- gsub("мяц", "ме", wd_10$age)
-wd_10$age <- gsub("ма", "ме", wd_10$age)
-wd_10$age <- gsub("ме", "month", wd_10$age)
-wd_10$age <- gsub("м", "month", wd_10$age)
+wd_10$ag <- gsub("месяца", "ме", wd_10$ag)
+wd_10$ag <- gsub("месяцев", "ме", wd_10$ag)
+wd_10$ag <- gsub("месяц", "ме", wd_10$ag)
+wd_10$ag <- gsub("мяцев", "ме", wd_10$ag)
+wd_10$ag <- gsub("мяца", "ме", wd_10$ag)
+wd_10$ag <- gsub("мев", "ме", wd_10$ag)
+wd_10$ag <- gsub("мес", "ме", wd_10$ag)
+wd_10$ag <- gsub("мяц", "ме", wd_10$ag)
+wd_10$ag <- gsub("ма", "ме", wd_10$ag)
+wd_10$ag <- gsub("ме", "month", wd_10$ag)
+wd_10$ag <- gsub("м", "month", wd_10$ag)
 
-wd_10$age <- gsub("суток", "д", wd_10$age)
-wd_10$age <- gsub("сутки", "д", wd_10$age)
-wd_10$age <- gsub("дней", "д", wd_10$age)
-wd_10$age <- gsub("сут", "д", wd_10$age)
-wd_10$age <- gsub("ски", "д", wd_10$age)
-wd_10$age <- gsub("дня", "д", wd_10$age)
-wd_10$age <- gsub("сей", "д", wd_10$age) #!!!!
-wd_10$age <- gsub("дей", "д", wd_10$age)
-wd_10$age <- gsub("дн", "д", wd_10$age)
-wd_10$age <- gsub("с", "д", wd_10$age)
-wd_10$age <- gsub("д", "day", wd_10$age)
+wd_10$ag <- gsub("суток", "д", wd_10$ag)
+wd_10$ag <- gsub("сутки", "д", wd_10$ag)
+wd_10$ag <- gsub("дней", "д", wd_10$ag)
+wd_10$ag <- gsub("сут", "д", wd_10$ag)
+wd_10$ag <- gsub("ски", "д", wd_10$ag)
+wd_10$ag <- gsub("дня", "д", wd_10$ag)
+wd_10$ag <- gsub("сей", "д", wd_10$ag) #!!!!
+wd_10$ag <- gsub("дей", "д", wd_10$ag)
+wd_10$ag <- gsub("дн", "д", wd_10$ag)
+wd_10$ag <- gsub("с", "д", wd_10$ag)
+wd_10$ag <- gsub("д", "day", wd_10$ag)
 
 
-wd_10 <- wd_10 %>% mutate(Age = ifelse(live == "live",duration(wd_10$age), 0))
+wd_10 <- wd_10 %>% mutate(Age = ifelse(live == "live",duration(wd_10$ag), 0))
 wd_10 <- wd_10 %>% mutate(Age_1 = strsplit(as.character(Age), 's')) %>%
   mutate(Age_1 = sapply(Age_1, head, 1)) 
-wd_10 <- wd_10 %>%  add_column(age_d = as.numeric(wd_10$Age_1), .after = 4)
-wd_10$age_d <- round(wd_10$age_d/86400,4)
+wd_10 <- wd_10 %>%  add_column(age = as.numeric(wd_10$Age_1), .after = 4)
+wd_10$age <- round(wd_10$age/86400,4)
 
-wd_10 <- wd_10 %>% mutate(Age = NULL, Age_1 = NULL) %>%
-  filter(age_d <= 1)
+wd_10 <- wd_10 %>% mutate(Age = NULL, Age_1 = NULL, ag = NULL) %>%
+  filter(age <= 1)
 
 wd_10 <- wd_10 %>% filter (gest >= 14) %>%  #гестация < 14
-  filter (mac == 0) %>% #мацерация
+  filter (mac == "no") %>% #мацерация
   filter (CM == "no") %>% #врождённые пороки
   filter (MP == "no") %>% #многоплодная
   filter (IUGR == "no") #СЗРП
+
+write.xlsx(wd_10,"Data/Clean/2010.xlsx")
 ```
-411
+414 + 3 невыявленных из-за "
 
 # Год 2011
 
@@ -161,7 +165,7 @@ wd_10 <- wd_10 %>% filter (gest >= 14) %>%  #гестация < 14
 #dat_11 %>% glimpse()
 
 wd_11 <- dat_11
-names(wd_11) <- c("case","gndr","live","age","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC")
+names(wd_11) <- c("case","gndr","live","ag","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC")
 
 #table(wd_11$case)
 #table(wd_11$gndr)
@@ -172,18 +176,18 @@ wd_11 <- wd_11 %>% mutate(gndr = ifelse(gndr == "ж", "f" , "m"))
 
 #ед сердцебиен???
 
-wd_11 <- wd_11 %>% mutate(age = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"), 0 , age)) %>%
-  mutate(age = ifelse(is.na(age) == T, live, age)) %>%
+wd_11 <- wd_11 %>% mutate(ag = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"), 0 , ag)) %>%
+  mutate(ag = ifelse(is.na(ag) == T, live, ag)) %>%
   mutate(live = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"),"still","live"))
 
-#table(wd_11$age)
+#table(wd_11$ag)
 
-wd_11 <- wd_11 %>% mutate(age = ifelse(age %in% c("живой", "живший","жив", "живш"), NA , age))
+wd_11 <- wd_11 %>% mutate(ag = ifelse(ag %in% c("живой", "живший","жив", "живш"), NA , ag))
 
 #table(wd_11$gest)
 #table(wd_11$mac)
 
-wd_11 <- wd_11 %>% mutate(mac = ifelse(mac == "да", 1 , 0))
+wd_11 <- wd_11 %>% mutate(mac = ifelse(mac == "да", "yes" , "no"))
 
 #table(wd_11$CM)
 
@@ -213,64 +217,66 @@ wd_11 <- wd_11 %>%
   filter (is.na(case) == FALSE) %>% #без протокола
   filter(gndr %in% c("m","f")) #без пола
 
-table(wd_11$age)
-wd_11$age <- gsub(",", ".", wd_11$age)
+#table(wd_11$ag)
+wd_11$ag <- gsub(",", ".", wd_11$ag)
 
-wd_11$age <- gsub("лет", "г", wd_11$age)
-wd_11$age <- gsub("года", "г", wd_11$age)
-wd_11$age <- gsub("госа", "г", wd_11$age)
-wd_11$age <- gsub("г", "year", wd_11$age)
+wd_11$ag <- gsub("лет", "г", wd_11$ag)
+wd_11$ag <- gsub("года", "г", wd_11$ag)
+wd_11$ag <- gsub("госа", "г", wd_11$ag)
+wd_11$ag <- gsub("г", "year", wd_11$ag)
 
-wd_11$age <- gsub("час", "ч", wd_11$age)
-wd_11$age <- gsub("чов", "ч", wd_11$age)
-wd_11$age <- gsub("ча", "ч", wd_11$age)
-wd_11$age <- gsub("ч", "hour", wd_11$age)
-
-
-wd_11$age <- gsub("минут", "мин", wd_11$age)
-wd_11$age <- gsub("мин.", "мин", wd_11$age)
-wd_11$age <- gsub("\"", "мин", wd_11$age)
-wd_11$age <- gsub("'", "мин", wd_11$age)
-wd_11$age <- gsub("мин", "minute", wd_11$age)
-
-wd_11$age <- gsub("месяца", "ме", wd_11$age)
-wd_11$age <- gsub("месяцев", "ме", wd_11$age)
-wd_11$age <- gsub("месяц", "ме", wd_11$age)
-wd_11$age <- gsub("мяцев", "ме", wd_11$age)
-wd_11$age <- gsub("мяца", "ме", wd_11$age)
-wd_11$age <- gsub("мев", "ме", wd_11$age)
-wd_11$age <- gsub("мес", "ме", wd_11$age)
-wd_11$age <- gsub("мяц", "ме", wd_11$age)
-wd_11$age <- gsub("ма", "ме", wd_11$age)
-wd_11$age <- gsub("ме", "month", wd_11$age)
-wd_11$age <- gsub("м", "month", wd_11$age)
-
-wd_11$age <- gsub("суток", "д", wd_11$age)
-wd_11$age <- gsub("дней", "д", wd_11$age)
-wd_11$age <- gsub("сутки", "д", wd_11$age)
-wd_11$age <- gsub("сут", "д", wd_11$age)
-wd_11$age <- gsub("ски", "д", wd_11$age)
-wd_11$age <- gsub("дня", "д", wd_11$age)
-wd_11$age <- gsub("дей", "д", wd_11$age)
-wd_11$age <- gsub("дн", "д", wd_11$age)
-wd_11$age <- gsub("с", "д", wd_11$age)
-wd_11$age <- gsub("д", "day", wd_11$age)
+wd_11$ag <- gsub("час", "ч", wd_11$ag)
+wd_11$ag <- gsub("чов", "ч", wd_11$ag)
+wd_11$ag <- gsub("ча", "ч", wd_11$ag)
+wd_11$ag <- gsub("ч", "hour", wd_11$ag)
 
 
-wd_11 <- wd_11 %>% mutate(Age = ifelse(live == "live",duration(wd_11$age), 0))
+wd_11$ag <- gsub("минут", "мин", wd_11$ag)
+wd_11$ag <- gsub("мин.", "мин", wd_11$ag)
+wd_11$ag <- gsub("\"", "мин", wd_11$ag)
+wd_11$ag <- gsub("'", "мин", wd_11$ag)
+wd_11$ag <- gsub("мин", "minute", wd_11$ag)
+
+wd_11$ag <- gsub("месяца", "ме", wd_11$ag)
+wd_11$ag <- gsub("месяцев", "ме", wd_11$ag)
+wd_11$ag <- gsub("месяц", "ме", wd_11$ag)
+wd_11$ag <- gsub("мяцев", "ме", wd_11$ag)
+wd_11$ag <- gsub("мяца", "ме", wd_11$ag)
+wd_11$ag <- gsub("мев", "ме", wd_11$ag)
+wd_11$ag <- gsub("мес", "ме", wd_11$ag)
+wd_11$ag <- gsub("мяц", "ме", wd_11$ag)
+wd_11$ag <- gsub("ма", "ме", wd_11$ag)
+wd_11$ag <- gsub("ме", "month", wd_11$ag)
+wd_11$ag <- gsub("м", "month", wd_11$ag)
+
+wd_11$ag <- gsub("суток", "д", wd_11$ag)
+wd_11$ag <- gsub("дней", "д", wd_11$ag)
+wd_11$ag <- gsub("сутки", "д", wd_11$ag)
+wd_11$ag <- gsub("сут", "д", wd_11$ag)
+wd_11$ag <- gsub("ски", "д", wd_11$ag)
+wd_11$ag <- gsub("дня", "д", wd_11$ag)
+wd_11$ag <- gsub("дей", "д", wd_11$ag)
+wd_11$ag <- gsub("дн", "д", wd_11$ag)
+wd_11$ag <- gsub("с", "д", wd_11$ag)
+wd_11$ag <- gsub("д", "day", wd_11$ag)
+
+
+wd_11 <- wd_11 %>% mutate(Age = ifelse(live == "live",duration(wd_11$ag), 0))
 wd_11 <- wd_11 %>% mutate(Age_1 = strsplit(as.character(Age), 's')) %>%
   mutate(Age_1 = sapply(Age_1, head, 1)) 
-wd_11 <- wd_11 %>%  add_column(age_d = as.numeric(wd_11$Age_1), .after = 4)
-wd_11$age_d <- round(wd_11$age_d/86400,4)
+wd_11 <- wd_11 %>%  add_column(age = as.numeric(wd_11$Age_1), .after = 4)
+wd_11$age <- round(wd_11$age/86400,4)
 
-wd_11 <- wd_11 %>% mutate(Age = NULL, Age_1 = NULL) %>%
-  filter(age_d <= 1)
+wd_11 <- wd_11 %>% mutate(Age = NULL, Age_1 = NULL, ag = NULL) %>%
+  filter(age <= 1)
 
 wd_11 <- wd_11 %>% filter (gest >= 14) %>%  #гестация < 14
-  filter (mac == 0) %>% #мацерация
+  filter (mac == "no") %>% #мацерация
   filter (CM == "no") %>% #врождённые пороки
   filter (MP == "no") %>% #многоплодная
   filter (IUGR == "no") #СЗРП
+
+write.xlsx(wd_11,"Data/Clean/2011.xlsx")
 ```
 54
 
@@ -281,7 +287,7 @@ wd_11 <- wd_11 %>% filter (gest >= 14) %>%  #гестация < 14
 #dat_12 %>% glimpse()
 
 wd_12 <- dat_12
-names(wd_12) <- c("case","gndr","live","age","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC")
+names(wd_12) <- c("case","gndr","live","ag","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC")
 
 #table(wd_12$case)
 #table(wd_12$gndr)
@@ -291,13 +297,13 @@ wd_12 <- wd_12 %>% mutate(gndr = case_when(gndr == "ж" ~ "f",
 
 #table(wd_12$live)
 
-wd_12 <- wd_12 %>% mutate(age = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"), 0 , age)) %>%
-  mutate(age = ifelse(is.na(age) == T, live, age)) %>%
+wd_12 <- wd_12 %>% mutate(ag = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"), 0 , ag)) %>%
+  mutate(ag = ifelse(is.na(ag) == T, live, ag)) %>%
   mutate(live = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый"),"still","live"))
 
-#table(wd_12$age)
+#table(wd_12$ag)
 
-wd_12 <- wd_12 %>% mutate(age = ifelse(age %in% c("живой", "живший","жив", "живш"), NA , age))
+wd_12 <- wd_12 %>% mutate(ag = ifelse(ag %in% c("живой", "живший","жив", "живш"), NA , ag))
 
 #table(wd_12$gest)
 
@@ -305,7 +311,7 @@ wd_12 <- wd_12 %>% mutate(gest = ifelse(gest == "?", NA , gest))
 
 #table(wd_12$mac)
 
-wd_12 <- wd_12 %>% mutate(mac = ifelse(mac == "да", 1 , 0))
+wd_12 <- wd_12 %>% mutate(mac = ifelse(mac == "да", "yes" , "no"))
 
 #table(wd_12$CM)
 
@@ -335,66 +341,67 @@ wd_12 <- wd_12 %>%
   filter (is.na(case) == FALSE) %>% #без протокола
   filter(gndr %in% c("m","f")) #без пола
 
-#table(wd_12$age)
-wd_12$age <- gsub(",", ".", wd_12$age)
+#table(wd_12$ag)
+wd_12$ag <- gsub(",", ".", wd_12$ag)
 
-wd_12$age <- gsub("лет", "г", wd_12$age)
-wd_12$age <- gsub("года", "г", wd_12$age)
-wd_12$age <- gsub("госа", "г", wd_12$age)
-wd_12$age <- gsub("г", "year", wd_12$age)
+wd_12$ag <- gsub("лет", "г", wd_12$ag)
+wd_12$ag <- gsub("года", "г", wd_12$ag)
+wd_12$ag <- gsub("госа", "г", wd_12$ag)
+wd_12$ag <- gsub("г", "year", wd_12$ag)
 
-wd_12$age <- gsub("час", "ч", wd_12$age)
-wd_12$age <- gsub("чов", "ч", wd_12$age)
-wd_12$age <- gsub("ча", "ч", wd_12$age)
-wd_12$age <- gsub("ч", "hour", wd_12$age)
+wd_12$ag <- gsub("час", "ч", wd_12$ag)
+wd_12$ag <- gsub("чов", "ч", wd_12$ag)
+wd_12$ag <- gsub("ча", "ч", wd_12$ag)
+wd_12$ag <- gsub("ч", "hour", wd_12$ag)
 
-wd_12$age <- gsub("нед", "week", wd_12$age)
+wd_12$ag <- gsub("нед", "week", wd_12$ag)
 
-wd_12$age <- gsub("минут", "мин", wd_12$age)
-wd_12$age <- gsub("мин.", "мин", wd_12$age)
-wd_12$age <- gsub("'", "мин", wd_12$age)
-wd_12$age <- gsub("мин", "minute", wd_12$age)
+wd_12$ag <- gsub("минут", "мин", wd_12$ag)
+wd_12$ag <- gsub("мин.", "мин", wd_12$ag)
+wd_12$ag <- gsub("'", "мин", wd_12$ag)
+wd_12$ag <- gsub("мин", "minute", wd_12$ag)
 
-wd_12$age <- gsub("месяца", "ме", wd_12$age)
-wd_12$age <- gsub("месяцев", "ме", wd_12$age)
-wd_12$age <- gsub("месяц", "ме", wd_12$age)
-wd_12$age <- gsub("мяцев", "ме", wd_12$age)
-wd_12$age <- gsub("мяца", "ме", wd_12$age)
-wd_12$age <- gsub("мев", "ме", wd_12$age)
-wd_12$age <- gsub("мес", "ме", wd_12$age)
-wd_12$age <- gsub("мяц", "ме", wd_12$age)
-wd_12$age <- gsub("ма", "ме", wd_12$age)
-wd_12$age <- gsub("ме", "month", wd_12$age)
-wd_12$age <- gsub("м", "month", wd_12$age)
+wd_12$ag <- gsub("месяца", "ме", wd_12$ag)
+wd_12$ag <- gsub("месяцев", "ме", wd_12$ag)
+wd_12$ag <- gsub("месяц", "ме", wd_12$ag)
+wd_12$ag <- gsub("мяцев", "ме", wd_12$ag)
+wd_12$ag <- gsub("мяца", "ме", wd_12$ag)
+wd_12$ag <- gsub("мев", "ме", wd_12$ag)
+wd_12$ag <- gsub("мес", "ме", wd_12$ag)
+wd_12$ag <- gsub("мяц", "ме", wd_12$ag)
+wd_12$ag <- gsub("ма", "ме", wd_12$ag)
+wd_12$ag <- gsub("ме", "month", wd_12$ag)
+wd_12$ag <- gsub("м", "month", wd_12$ag)
 
-wd_12$age <- gsub("сек", "second", wd_12$age)
+wd_12$ag <- gsub("сек", "second", wd_12$ag)
 
-wd_12$age <- gsub("суток", "д", wd_12$age)
-wd_12$age <- gsub("дней", "д", wd_12$age)
-wd_12$age <- gsub("сутки", "д", wd_12$age)
-wd_12$age <- gsub("сут", "д", wd_12$age)
-wd_12$age <- gsub("ски", "д", wd_12$age)
-wd_12$age <- gsub("дня", "д", wd_12$age)
-wd_12$age <- gsub("дей", "д", wd_12$age)
-wd_12$age <- gsub("дн", "д", wd_12$age)
-wd_12$age <- gsub("с", "д", wd_12$age)
-wd_12$age <- gsub("д", "day", wd_12$age)
+wd_12$ag <- gsub("суток", "д", wd_12$ag)
+wd_12$ag <- gsub("дней", "д", wd_12$ag)
+wd_12$ag <- gsub("сутки", "д", wd_12$ag)
+wd_12$ag <- gsub("сут", "д", wd_12$ag)
+wd_12$ag <- gsub("ски", "д", wd_12$ag)
+wd_12$ag <- gsub("дня", "д", wd_12$ag)
+wd_12$ag <- gsub("дей", "д", wd_12$ag)
+wd_12$ag <- gsub("дн", "д", wd_12$ag)
+wd_12$ag <- gsub("с", "д", wd_12$ag)
+wd_12$ag <- gsub("д", "day", wd_12$ag)
 
 
-wd_12 <- wd_12 %>% mutate(Age = ifelse(live == "live",duration(wd_12$age), 0))
+wd_12 <- wd_12 %>% mutate(Age = ifelse(live == "live",duration(wd_12$ag), 0))
 wd_12 <- wd_12 %>% mutate(Age_1 = strsplit(as.character(Age), 's')) %>%
   mutate(Age_1 = sapply(Age_1, head, 1)) 
-wd_12 <- wd_12 %>%  add_column(age_d = as.numeric(wd_12$Age_1), .after = 4)
-wd_12$age_d <- round(wd_12$age_d/86400,4)
+wd_12 <- wd_12 %>%  add_column(age = as.numeric(wd_12$Age_1), .after = 4)
+wd_12$age <- round(wd_12$age/86400,4)
 
-wd_12 <- wd_12 %>% mutate(Age = NULL, Age_1 = NULL) %>%
-  filter(age_d <= 1)
+wd_12 <- wd_12 %>% mutate(Age = NULL, Age_1 = NULL, ag = NULL) %>%
+  filter(age <= 1)
 
 wd_12 <- wd_12 %>% filter (gest >= 14) %>%  #гестация < 14
-  filter (mac == 0) %>% #мацерация
+  filter (mac == "no") %>% #мацерация
   filter (CM == "no") %>% #врождённые пороки
   filter (MP == "no") %>% #многоплодная
   filter (IUGR == "no") #СЗРП
+
+write.xlsx(wd_12,"Data/Clean/2012.xlsx")
 ```
 196
-
