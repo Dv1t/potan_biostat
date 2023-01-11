@@ -1,0 +1,153 @@
+---
+title: '2012'
+author: "Кульгаева А."
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(readxl)
+library(dplyr)
+library(tibble)
+library(psych)
+library(tidyr)
+library(flextable)
+library(tibble)
+library(gtsummary)
+library(lubridate)
+library(openxlsx)
+
+Sys.setlocale("LC_CTYPE", "russian")
+```
+
+```{r data, include=FALSE}
+dat_12 <- read_excel("Data/Raw/2012.xlsx", col_names = TRUE)
+```
+
+Предподготовка
+```{r}
+#dat_12 %>% glimpse()
+
+wd_12 <- dat_12
+names(wd_12) <- c("case","gndr","live","ag","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC")
+
+#table(wd_12$case)
+#table(wd_12$gndr)
+
+wd_12 <- wd_12 %>% mutate(gndr = case_when(gndr == "ж" ~ "f",
+                                           gndr == "м" ~ "m"), gndr = ifelse(gndr %in% c("f","m"),gndr, NA))
+
+#table(wd_12$live)
+
+wd_12 <- wd_12 %>% mutate(ag = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"), 0 , ag)) %>%
+  mutate(ag = ifelse(is.na(ag) == T, live, ag)) %>%
+  mutate(live = ifelse(live %in% c("мертв","мертвый","мёртвый","мёритвый"),"still","live"))
+
+#table(wd_12$ag)
+
+wd_12 <- wd_12 %>% mutate(ag = ifelse(ag %in% c("живой", "живший","жив", "живш"), NA , ag))
+
+#table(wd_12$gest)
+
+wd_12 <- wd_12 %>% mutate(gest = ifelse(gest == "?", NA , gest))
+
+#table(wd_12$mac)
+
+wd_12 <- wd_12 %>% mutate(mac = ifelse(mac == "да", "yes" , "no"))
+
+#table(wd_12$CM)
+
+wd_12 <- wd_12 %>% mutate(CM = CM %>% replace_na("no"), CM = ifelse(CM == "нет", "no",CM))
+
+#table(wd_12$MP)
+
+wd_12 <- wd_12 %>% mutate(MP = MP %>% replace_na("no")) %>% mutate(MP = ifelse(MP == "да","yes","no")) 
+
+#table(wd_12$IUGR)
+
+wd_12 <- wd_12 %>% mutate(IUGR =  IUGR %>% as.character() %>% replace_na("no"))
+
+#Добавляю год
+wd_12 <- wd_12 %>% mutate(year =  2012)
+
+
+wd_12 <- wd_12 %>% mutate(across(c(case, gest, LB, WB,brn, hrt,lung,liver,spln, kid, thym, adr, panc, plac, HC, CC), ~ as.numeric(.x)), across(c(gndr, live, mac, MP), ~ as.factor(.x)))
+
+#wd_12 %>% glimpse()
+
+```
+
+Фильтрация
+```{r }
+wd_12 <- wd_12 %>%
+  filter (is.na(case) == FALSE) %>% #без протокола
+  filter(gndr %in% c("m","f")) #без пола
+
+#table(wd_12$ag)
+wd_12$ag <- gsub(",", ".", wd_12$ag)
+
+wd_12$ag <- gsub("лет", "г", wd_12$ag)
+wd_12$ag <- gsub("года", "г", wd_12$ag)
+wd_12$ag <- gsub("госа", "г", wd_12$ag)
+wd_12$ag <- gsub("г", "year", wd_12$ag)
+
+wd_12$ag <- gsub("час", "ч", wd_12$ag)
+wd_12$ag <- gsub("чов", "ч", wd_12$ag)
+wd_12$ag <- gsub("ча", "ч", wd_12$ag)
+wd_12$ag <- gsub("ч", "hour", wd_12$ag)
+
+wd_12$ag <- gsub("нед", "week", wd_12$ag)
+
+wd_12$ag <- gsub("минут", "мин", wd_12$ag)
+wd_12$ag <- gsub("мин.", "мин", wd_12$ag)
+wd_12$ag <- gsub("'", "мин", wd_12$ag)
+wd_12$ag <- gsub("мин", "minute", wd_12$ag)
+
+wd_12$ag <- gsub("месяца", "ме", wd_12$ag)
+wd_12$ag <- gsub("месяцев", "ме", wd_12$ag)
+wd_12$ag <- gsub("месяц", "ме", wd_12$ag)
+wd_12$ag <- gsub("мяцев", "ме", wd_12$ag)
+wd_12$ag <- gsub("мяца", "ме", wd_12$ag)
+wd_12$ag <- gsub("мев", "ме", wd_12$ag)
+wd_12$ag <- gsub("мес", "ме", wd_12$ag)
+wd_12$ag <- gsub("мяц", "ме", wd_12$ag)
+wd_12$ag <- gsub("ма", "ме", wd_12$ag)
+wd_12$ag <- gsub("ме", "month", wd_12$ag)
+wd_12$ag <- gsub("м", "month", wd_12$ag)
+
+wd_12$ag <- gsub("сек", "second", wd_12$ag)
+
+wd_12$ag <- gsub("суток", "д", wd_12$ag)
+wd_12$ag <- gsub("дней", "д", wd_12$ag)
+wd_12$ag <- gsub("сутки", "д", wd_12$ag)
+wd_12$ag <- gsub("сут", "д", wd_12$ag)
+wd_12$ag <- gsub("ски", "д", wd_12$ag)
+wd_12$ag <- gsub("дня", "д", wd_12$ag)
+wd_12$ag <- gsub("дей", "д", wd_12$ag)
+wd_12$ag <- gsub("дн", "д", wd_12$ag)
+wd_12$ag <- gsub("с", "д", wd_12$ag)
+wd_12$ag <- gsub("д", "day", wd_12$ag)
+
+
+wd_12 <- wd_12 %>% mutate(Age = ifelse(live == "live",duration(wd_12$ag), 0))
+wd_12 <- wd_12 %>% mutate(Age_1 = strsplit(as.character(Age), 's')) %>%
+  mutate(Age_1 = sapply(Age_1, head, 1)) 
+wd_12 <- wd_12 %>%  add_column(age = as.numeric(wd_12$Age_1), .after = 4)
+wd_12$age <- round(wd_12$age/86400,4)
+
+wd_12 <- wd_12 %>% mutate(Age = NULL, Age_1 = NULL, ag = NULL) %>%
+  filter(age <= 1)
+
+wd_12 <- wd_12 %>% filter (gest >= 14) %>%  #гестация < 14
+  filter (mac == "no") %>% #мацерация
+  filter (CM == "no") %>% #врождённые пороки
+  filter (MP == "no") %>% #многоплодная
+  filter (IUGR == "no") #СЗРП
+
+write.xlsx(wd_12,"Data/Clean/2012.xlsx")
+```
+196
