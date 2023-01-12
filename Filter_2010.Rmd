@@ -20,7 +20,7 @@ library(flextable)
 library(tibble)
 library(gtsummary)
 library(lubridate)
-library(openxlsx)
+library(readr)
 
 Sys.setlocale("LC_CTYPE", "russian")
 ```
@@ -34,7 +34,7 @@ dat_10 <- read_excel("Data/Raw/2010.xlsx", col_names = TRUE)
 #dat_10 %>% glimpse()
 
 wd_10 <- dat_10
-names(wd_10) <- c("case","gndr","live","ag","gest","LB","WB","brn","hrt","lung","liver","spln","kid","thym","adr","panc","plac","mac","CM","MP","IUGR","HC","CC","wth")
+names(wd_10) <- c("case","gender","still_live","ag","gest","LB","WB","brain","heart","lung","liver","spleen","kidney","thymus","adrenal","pancreas","placenta","mac","CM","MP","IUGR","HC","CC","wth")
 
 #СТРАННОСТЬ!!!
 #table(wd_10$wht)
@@ -42,15 +42,15 @@ wd_10 <- wd_10 %>% mutate(wth = NULL)
 ####  
 
 #table(wd_10$case)
-#table(wd_10$gndr)
+#table(wd_10$gender)
 
-wd_10 <- wd_10 %>% mutate(gndr = ifelse(gndr == "ж", "f" , "m"))
+wd_10 <- wd_10 %>% mutate(gender = ifelse(gender == "ж", "f" , "m"))
 
-#table(wd_10$live)
-#ifelse(wd_10$live =="живой", print(wd_10$ag), NA)
+#table(wd_10$still_live)
+#ifelse(wd_10$still_live =="живой", print(wd_10$ag), NA)
 
-wd_10 <- wd_10 %>% mutate(ag = ifelse(live %in% c("мертв","мертвый","мёртвый"), 0 , ifelse(live == "живой", ag, live))) %>%
-  mutate(live = ifelse(ag == 0,"still","live")) %>%
+wd_10 <- wd_10 %>% mutate(ag = ifelse(still_live %in% c("мертв","мертвый","мёртвый"), 0 , ifelse(still_live == "живой", ag, still_live))) %>%
+  mutate(still_live = ifelse(ag == 0,"still","live")) %>%
   mutate(ag = ifelse(ag == "1", "1 сут",ag))
 
 #table(wd_10$ag)
@@ -74,11 +74,11 @@ wd_10 <- wd_10 %>% mutate(MP = MP %>% replace_na("no")) %>% mutate(MP = ifelse(M
 
 wd_10 <- wd_10 %>% mutate(IUGR =  IUGR %>% as.character() %>% replace_na("no"))
 
-#Добавляю год
+#Добавляем год
 wd_10 <- wd_10 %>% mutate(year =  2010)
 
 
-wd_10 <- wd_10 %>% mutate(across(c(case, gest, LB, WB,brn, hrt,lung,liver,spln, kid, thym, adr, panc, plac, HC, CC), ~ as.numeric(.x)), across(c(gndr, live, mac, MP), ~ as.factor(.x)))
+wd_10 <- wd_10 %>% mutate(across(c(case, gest, LB, WB,brain, heart,lung,liver,spleen, kidney, thymus, adrenal, pancreas, placenta, HC, CC), ~ as.numeric(.x)), across(c(gender, still_live, mac, MP), ~ as.factor(.x)))
 
 #wd_10 %>% glimpse()
 
@@ -88,7 +88,7 @@ wd_10 <- wd_10 %>% mutate(across(c(case, gest, LB, WB,brn, hrt,lung,liver,spln, 
 ```{r }
 wd_10 <- wd_10 %>%
   filter (is.na(case) == FALSE) %>% #без протокола
-  filter(gndr %in% c("m","f")) #без пола
+  filter(gender %in% c("m","f")) #без пола
 
 #сей?
 #table(wd_10$ag)
@@ -135,14 +135,15 @@ wd_10$ag <- gsub("с", "д", wd_10$ag)
 wd_10$ag <- gsub("д", "day", wd_10$ag)
 
 
-wd_10 <- wd_10 %>% mutate(Age = ifelse(live == "live",duration(wd_10$ag), 0))
+wd_10 <- wd_10 %>% mutate(Age = ifelse(still_live == "live",duration(wd_10$ag), 0))
 wd_10 <- wd_10 %>% mutate(Age_1 = strsplit(as.character(Age), 's')) %>%
   mutate(Age_1 = sapply(Age_1, head, 1)) 
-wd_10 <- wd_10 %>%  add_column(age = as.numeric(wd_10$Age_1), .after = 4)
-wd_10$age <- round(wd_10$age/86400,4)
+wd_10 <- wd_10 %>%  add_column(age_days = as.numeric(wd_10$Age_1), .after = 4)
+wd_10$age_days <- round(wd_10$age_days/86400,4)
 
 wd_10 <- wd_10 %>% mutate(Age = NULL, Age_1 = NULL, ag = NULL) %>%
-  filter(age <= 1)
+  filter(age_days <= 1) %>%
+  mutate(age_days = ifelse(age_days == 0, 0,1) %>% as.factor())
 
 wd_10 <- wd_10 %>% filter (gest >= 14) %>%  #гестация < 14
   filter (mac == "no") %>% #мацерация
@@ -150,6 +151,8 @@ wd_10 <- wd_10 %>% filter (gest >= 14) %>%  #гестация < 14
   filter (MP == "no") %>% #многоплодная
   filter (IUGR == "no") #СЗРП
 
-write.xlsx(wd_10,"Data/Clean/2010.xlsx")
+write_rds(wd_10,"Data/Nastya_clean_data/2010.rds")
+
+#wd_10 %>% glimpse()
 ```
 414 + 3 невыявленных из-за "
