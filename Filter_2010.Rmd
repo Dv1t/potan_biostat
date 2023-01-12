@@ -151,14 +151,8 @@ wd_10 <- wd_10 %>% filter (gest >= 14) %>%  #гестация < 14
   filter (MP == "no") %>% #многоплодная
   filter (IUGR == "no") #СЗРП
 
-<<<<<<< HEAD
 write_rds(wd_10,"Data/Nastya_clean_data/2010.rds")
 
 #wd_10 %>% glimpse()
-=======
-
-library(readr)
-write_rds(wd_10,"Data/Nastya_clean_data/2010.rds")
->>>>>>> df2cbf199711dd65274207782b7572d5a8511267
 ```
 414 + 3 невыявленных из-за "
