@@ -63,7 +63,7 @@ colnames(work_dat2013)[1] = "case"
 colnames(work_dat2013)[2] = "gender"
 colnames(work_dat2013)[3] = "still_live"
 colnames(work_dat2013)[4] = "age"
-colnames(work_dat2013)[5] = "age_day"
+colnames(work_dat2013)[5] = "age_days"
 colnames(work_dat2013)[6] = "gest"
 colnames(work_dat2013)[7] = "LB"
 colnames(work_dat2013)[8] = "WB"
@@ -84,5 +84,23 @@ colnames(work_dat2013)[22] = "IUGR"
 colnames(work_dat2013)[23] = "HC"
 colnames(work_dat2013)[24] = "CC"
 
+work_dat2013$year <- 2013
+
+work_dat2013$still_live <- as.factor(work_dat2013$still_live)
+
+work_dat2013$age_days <- ifelse(work_dat2013$age_days == 0, 0, 1)
+
+work_dat2013$still_live <- ifelse(work_dat2013$age_days == 0, "still", "live")
+
+work_dat2013 <- work_dat2013[, -4]
+
+
+work_dat2013$mac <- ifelse(work_dat2013$mac == "нет", "no", "yes")
+work_dat2013$CM <- ifelse(work_dat2013$CM == "нет", "no", "yes")
+work_dat2013$MP <- ifelse(work_dat2013$MP == "нет", "no", "yes")
+work_dat2013$IUGR <- ifelse(work_dat2013$IUGR == "нет", "no", "yes")
+
 
 write.csv2(work_dat2013,"Data/2013.csv")
+
+saveRDS(work_dat2013, "work_dat2013.rds")
