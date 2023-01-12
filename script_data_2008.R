@@ -93,8 +93,10 @@ table (work_dat$IUGR, useNA = "always")
 table (work_dat$MP, useNA = "always")
 
 work_dat$mac [work_dat$mac == 'нет'] <- 'no'
+
+work_dat$MP <- as.character(work_dat$MP)
 work_dat$MP <- work_dat$MP %>% replace_na ("no")
-work_dat$CM <- work_dat$CM %>% replace_na ("no")
+
 work_dat$IUGR <- as.character(work_dat$IUGR)
 work_dat$IUGR <- work_dat$IUGR %>% replace_na ("no")
 
@@ -132,6 +134,15 @@ work_dat$CC <- round(work_dat$CC, 2)
 
 work_dat <-  work_dat %>%
   mutate(across(c(gender, still_live, mac, CM, MP, IUGR), ~ as.factor(.x)), across(c(case, age_days, gest, LB, WB), ~ as.numeric(.x))) 
+
+#добавляем год
+work_dat$year <- 2008
+
+#age приводим к факторной со значениями 0 и 1
+work_dat <- work_dat %>% 
+  mutate(age_days = ifelse(age_days == 0, 0, 1))
+work_dat$age_days <- as.factor (work_dat$age_days)
+
 
 write_rds(work_dat, "Data/Processed/D2008.rds")
 
