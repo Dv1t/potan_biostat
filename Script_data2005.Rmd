@@ -211,7 +211,7 @@ Data_step2 <-  Data_step2 %>%
 summary(Data_step2)
 #добавляем колонку с годом
 
-Data_step2 <- Data_step2 %>% add_column(year = "2005", .before = 1)
+Data_step2 <- Data_step2 %>% add_column(year = "2005", .after = 23)
 write_rds(Data_step2, "Data/Raw/D2005.rds")
 read_rds("Data/Raw/D2005.rds")
 
