@@ -9,7 +9,7 @@ library(readr)
 
 
 work_dat <-read_excel("Data/Raw/2006.xlsx", col_names = TRUE) %>%
-  filter(`пол` %in% c("м","ж")) %>% #без пола
+  filter(`пол` %in% c("m","f")) %>% #без пола
   filter (`№ протокола` != "НЕТ ПРОТОКОЛА") %>% #без протокола
   #mutate(`многоплодная` = replace_na(`многоплодная`, 'нет')) %>%
   #mutate(across(c(`пол`, `мёртвый/живой`, `мацерация`, `многоплодная`), ~ as.factor(.x)), across(c(`№ протокола`, `длина тела`, `масса тела`,`мозг`,`сердце`,`лёгкие`,`печень`,`селезёнка`,`почки`,`тимус`, `н/п`,`пжж`,`плацента`,`окружность головы`,`окружность груди` ), ~ as.numeric(.x))) %>% 
@@ -132,6 +132,15 @@ work_dat$CC <- round(work_dat$CC, 2)
 
 work_dat <-  work_dat %>%
   mutate(across(c(gender, still_live, mac, CM, MP, IUGR), ~ as.factor(.x)), across(c(case, age_days, gest, LB, WB), ~ as.numeric(.x))) 
+
+
+#добавляем год
+work_dat$year <- 2006
+
+#age приводим к факторной со значениями 0 и 1
+work_dat <- work_dat %>% 
+  mutate(age_days = ifelse(age_days == 0, 0, 1))
+work_dat$age_days <- as.factor (work_dat$age_days)
 
 write_rds(work_dat, "Data/Processed/D2006.rds")
 
