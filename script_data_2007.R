@@ -133,5 +133,14 @@ work_dat$CC <- round(work_dat$CC, 2)
 work_dat <-  work_dat %>%
   mutate(across(c(gender, still_live, mac, CM, MP, IUGR), ~ as.factor(.x)), across(c(case, age_days, gest, LB, WB), ~ as.numeric(.x))) 
 
+
+#добавляем год
+work_dat$year <- 2007
+
+#age приводим к факторной со значениями 0 и 1
+work_dat <- work_dat %>% 
+  mutate(age_days = ifelse(age_days == 0, 0, 1))
+work_dat$age_days <- as.factor (work_dat$age_days)
+
 write_rds(work_dat, "Data/Processed/D2007.rds")
 
