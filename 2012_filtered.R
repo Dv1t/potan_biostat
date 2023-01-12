@@ -44,13 +44,12 @@ work_dat2012$возраст <- gsub("сек", "seconds", work_dat2012$возра
 work_dat2012 <- work_dat2012 %>% 
   mutate(Age = ifelse(is.na(`мёртвый/живой`), duration(`возраст`), 0))
 
+#`мёртвый/живой` == "мертв"
 work_dat2012 <- work_dat2012 %>% 
   mutate(Возраст = strsplit(as.character(Age), 's')) %>%
   mutate(Возраст = sapply(Возраст, head, 1)) 
-
 work_dat2012 <- work_dat2012 %>%  
   add_column(`Возраст (сут)` = as.numeric(work_dat2012$Возраст), .after = 4)
-
 work_dat2012$`Возраст (сут)` <- round(work_dat2012$`Возраст (сут)`/86400,4)
 
 # фильтруем по возрасту
@@ -63,7 +62,7 @@ colnames(work_dat2012)[1] = "case"
 colnames(work_dat2012)[2] = "gender"
 colnames(work_dat2012)[3] = "still_live"
 colnames(work_dat2012)[4] = "age"
-colnames(work_dat2012)[5] = "age_day"
+colnames(work_dat2012)[5] = "age_days"
 colnames(work_dat2012)[6] = "gest"
 colnames(work_dat2012)[7] = "LB"
 colnames(work_dat2012)[8] = "WB"
@@ -84,7 +83,22 @@ colnames(work_dat2012)[22] = "IUGR"
 colnames(work_dat2012)[23] = "HC"
 colnames(work_dat2012)[24] = "CC"
 
+work_dat2012$year <- 2012
 
+work_dat2012$still_live <- as.factor(work_dat2012$still_live)
+
+work_dat2012$age_days <- ifelse(work_dat2012$age_days == 0, 0, 1)
+
+work_dat2012$still_live <- ifelse(work_dat2012$age_days == 0, "still", "live")
+
+work_dat2012 <- work_dat2012[, -4]
+
+
+work_dat2012$mac <- ifelse(work_dat2012$mac == "нет", "no", "yes")
+work_dat2012$CM <- ifelse(work_dat2012$CM == "нет", "no", "yes")
+work_dat2012$MP <- ifelse(work_dat2012$MP == "нет", "no", "yes")
+work_dat2012$IUGR <- ifelse(work_dat2012$IUGR == "нет", "no", "yes")
 
 
 write.csv2(work_dat2012,"Data/2012.csv")
+saveRDS(work_dat2012, "work_dat2012.rds")
