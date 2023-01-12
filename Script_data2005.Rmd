@@ -204,7 +204,16 @@ Data_step2$CC <- round(Data_step2$CC, 2)
 Data_step2 <-  Data_step2 %>%
  mutate(across(c(gender, age_days, still_live, mac, CM, MP, IUGR), ~ as.factor(.x)), across(c(gest), ~ as.numeric(.x))) 
 
+```
+
+
+```{r}
 summary(Data_step2)
+#добавляем колонку с годом
+
+Data_step2 <- Data_step2 %>% add_column(year = "2005", .before = 1)
 write_rds(Data_step2, "Data/Raw/D2005.rds")
+read_rds("Data/Raw/D2005.rds")
 
 ```
+
