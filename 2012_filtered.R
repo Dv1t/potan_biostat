@@ -99,6 +99,11 @@ work_dat2012$CM <- ifelse(work_dat2012$CM == "нет", "no", "yes")
 work_dat2012$MP <- ifelse(work_dat2012$MP == "нет", "no", "yes")
 work_dat2012$IUGR <- ifelse(work_dat2012$IUGR == "нет", "no", "yes")
 
+work_dat2012 <- work_dat2012 %>% 
+  mutate(gender = ifelse(gender == "м", "m", "f")) #привела пол к англиским "m" и "f"
+
+work_dat2012$IUGR <- as.character(work_dat2012$IUGR)
+work_dat2012$IUGR <- work_dat2012$IUGR %>% replace_na ("no") #заменила NA на no
 
 write.csv2(work_dat2012,"Data/2012.csv")
 saveRDS(work_dat2012, "work_dat2012.rds")
