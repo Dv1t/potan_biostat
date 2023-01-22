@@ -63,7 +63,7 @@ colnames(work_dat2014)[1] = "case"
 colnames(work_dat2014)[2] = "gender"
 colnames(work_dat2014)[3] = "still_live"
 colnames(work_dat2014)[4] = "age"
-colnames(work_dat2014)[5] = "age_day"
+colnames(work_dat2014)[5] = "age_days"
 colnames(work_dat2014)[6] = "gest"
 colnames(work_dat2014)[7] = "LB"
 colnames(work_dat2014)[8] = "WB"
@@ -84,6 +84,58 @@ colnames(work_dat2014)[22] = "IUGR"
 colnames(work_dat2014)[23] = "HC"
 colnames(work_dat2014)[24] = "CC"
 
+
+#names
+#colnames(work_dat2013)[1] = "case"
+#colnames(work_dat2013)[2] = "gender"
+#colnames(work_dat2013)[3] = "still_live"
+#colnames(work_dat2013)[4] = "age"
+#colnames(work_dat2013)[5] = "age_days"
+#colnames(work_dat2013)[6] = "gest"
+#colnames(work_dat2013)[7] = "LB"
+#colnames(work_dat2013)[8] = "WB"
+#colnames(work_dat2013)[9] = "brain"
+#colnames(work_dat2013)[10] = "heart"
+#colnames(work_dat2013)[11] = "lung"
+#colnames(work_dat2013)[12] = "liver"
+#colnames(work_dat2013)[13] = "spleen"
+#colnames(work_dat2013)[14] = "kidney"
+#colnames(work_dat2013)[15] = "thymus"
+#colnames(work_dat2013)[16] = "adrenal"
+#colnames(work_dat2013)[17] = "pancreas"
+#colnames(work_dat2013)[18] = "placenta"
+#colnames(work_dat2013)[19] = "mac"
+#colnames(work_dat2013)[20] = "CM"
+#colnames(work_dat2013)[21] = "MP"
+#colnames(work_dat2013)[22] = "IUGR"
+#colnames(work_dat2013)[23] = "HC"
+#colnames(work_dat2013)[24] = "CC"
+
+work_dat2014$year <- 2014
+
+work_dat2014$still_live <- as.factor(work_dat2014$still_live)
+
+work_dat2014$age_days <- ifelse(work_dat2014$age_days == 0, 0, 1)
+
+work_dat2014$still_live <- ifelse(work_dat2014$age_days == 0, "still", "live")
+
+work_dat2014 <- work_dat2014[, -4]
+
+work_dat2014$mac <- ifelse(work_dat2014$mac == "нет", "no", "yes")
+work_dat2014$CM <- ifelse(work_dat2014$CM == "нет", "no", "yes")
+work_dat2014$MP <- ifelse(work_dat2014$MP == "нет", "no", "yes")
+work_dat2014$IUGR <- ifelse(work_dat2014$IUGR == "нет", "no", "yes")
+
+
+work_dat2014 <- work_dat2014 %>% 
+  mutate(gender = ifelse(gender == "м", "m", "f")) #привела пол к англиским "m" и "f"
+
+work_dat2014$IUGR <- as.character(work_dat2014$IUGR)
+work_dat2014$IUGR <- work_dat2014$IUGR %>% replace_na ("no") #заменила NA на no
+
+
+
+write_rds(work_dat2014, "Data/Raw/2014.rds")
 write.csv2(work_dat2014,"Data/2014.csv")
 
 saveRDS(work_dat2014, "work_dat2014.rds")
