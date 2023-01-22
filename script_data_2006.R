@@ -9,6 +9,7 @@ library(readr)
 
 
 work_dat <-read_excel("Data/Raw/2006.xlsx", col_names = TRUE) %>%
+  mutate(`пол` = ifelse(`пол`== "м","m", ifelse(`пол`== "ж","f",NA))) %>%
   filter(`пол` %in% c("m","f")) %>% #без пола
   filter (`№ протокола` != "НЕТ ПРОТОКОЛА") %>% #без протокола
   #mutate(`многоплодная` = replace_na(`многоплодная`, 'нет')) %>%
