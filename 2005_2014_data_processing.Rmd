@@ -1,65 +1,64 @@
 ---
 title: "Data processing"
-author: "Zhur"
+author: "Group Morph2"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+Sys.setlocale("LC_CTYPE", "russian")
 ```
 
-```{r}
-#Загрузим необходимые пакеты.
+```{r libraries, include=FALSE}
 library(readr)
 library(readxl)
 library(dplyr)
 library(tibble)
 library(psych)
 library(tidyr)
-#library(flextable)
+library(flextable)
 #library(lubridate)
 ```
 
-```{r}
+Подгрузка данных и приводим типы данных к единообразию
 
-#подгружаем данные и приводим типы данных к единообразию, где это необходимо
-
-D2005 <- read_rds ("Data/Kristina_clean_data/D2005.rds")
+```{r separ_data}
+D2005 <- read_rds ("Data/Processed/D2005.rds")
 D2005$case <- as.numeric(D2005$case)
 D2005$year <- as.numeric(D2005$year)
-D2006 <- read_rds ("Data/Vitaliy_clean_data/D2006.rds")
+D2006 <- read_rds ("Data/Processed/D2006.rds")
 D2006 <- D2006 %>% 
   mutate(still_live = ifelse(still_live == 0, "still", "live"))
 D2006$still_live <- as.factor(D2006$still_live)
 
-D2007 <- read_rds ("Data/Vitaliy_clean_data/D2007.rds")
+D2007 <- read_rds ("Data/Processed/D2007.rds")
 D2007 <- D2007 %>% 
   mutate(still_live = ifelse(still_live == 0, "still", "live"))
 D2007$still_live <- as.factor(D2007$still_live)
 
-D2008 <- read_rds ("Data/Vitaliy_clean_data/D2008.rds")
+D2008 <- read_rds ("Data/Processed/D2008.rds")
 D2008 <- D2008 %>% 
   mutate(still_live = ifelse(still_live == 0, "still", "live"))
 D2008$still_live <- as.factor(D2008$still_live)
 
 
-D2009 <- read_rds ("Data/Kristina_clean_data/D2009.rds")
+D2009 <- read_rds ("Data/Processed/D2009.rds")
 D2009$year <- as.numeric(D2009$year)
 
-D2010 <- read_rds ("Data/Nastya_clean_data/2010.rds")
+D2010 <- read_rds ("Data/Processed/D2010.rds")
 D2010$CM <- as.factor(D2010$CM)
 D2010$IUGR <- as.factor(D2010$IUGR)
 
-D2011 <- read_rds ("Data/Nastya_clean_data/2011.rds")
+D2011 <- read_rds ("Data/Processed/D2011.rds")
 D2011$CM <- as.factor(D2011$CM)
 D2011$IUGR <- as.factor(D2011$IUGR)
 
-D2012<- read_rds ("Data/Nastya_clean_data/2012.rds")
+D2012<- read_rds ("Data/Processed/D2012.rds")
 D2012$CM <- as.factor(D2012$CM)
 D2012$IUGR <- as.factor(D2012$IUGR)
 
-D2013 <- read_rds ("Data/Nadya_clean_data/2013.rds")
+D2013 <- read_rds ("Data/Processed/D2013.rds")
 D2013$CM <- as.factor(D2013$CM)
 D2013$IUGR <- as.factor(D2013$IUGR)
 D2013$mac <- as.factor(D2013$mac)
@@ -68,7 +67,7 @@ D2013$gender <- as.factor(D2013$gender)
 D2013$still_live <- as.factor(D2013$still_live)
 D2013$age_days <- as.factor(D2013$age_days)
 
-D2014 <- read_rds ("Data/Nadya_clean_data/2014.rds")
+D2014 <- read_rds ("Data/Processed/D2014.rds")
 D2014$CM <- as.factor(D2014$CM)
 D2014$IUGR <- as.factor(D2014$IUGR)
 D2014$mac <- as.factor(D2014$mac)
@@ -79,33 +78,56 @@ D2014$age_days <- as.factor(D2014$age_days)
 
 ```
 
-```{r}
-#объединяем датасеты
-
+ Объединение датасетов
+ 
+```{r join_data}
 D2005_2014 <-  bind_rows(D2005) %>% bind_rows(D2006) %>% bind_rows(D2007) %>% bind_rows(D2008) %>% bind_rows(D2009) %>% bind_rows(D2010) %>%  bind_rows(D2011) %>% bind_rows(D2012) %>% bind_rows(D2013) %>% bind_rows(D2014)
 
 ```
 
 ```{r}
-summary (D2005_2014)
-#в конечную выборку попал 1 образец с муммификацией (mac = yes), удаляем
+#summary (D2005_2014)
+#D2005_2014 %>% glimpse()
+
+# в конечную выборку попал 1 образец с муммификацией (mac = yes), удаляем
+# также 1 живорожденный ребенок получил 0 суток в возрасте
 # для анализа сроки гестации берем 20-42 неделя
+# убираем строки с выбросами в колонке "селезёнка" (и не только)
 
 D2005_2014 <- D2005_2014 %>% 
+  mutate(age_days = ifelse(still_live == 'live', 1, 0) %>% as.factor(), year = year %>% as.factor()) %>%
   filter (mac != "yes") %>%
-  filter(gest >=20 & gest <= 42)
-  
+  filter(gest >=20 & gest <= 42) %>%
+  mutate(gest = gest %>% as.factor()) %>%
+  filter (spleen < 1000)
+
+#summary (D2005_2014)
+#D2005_2014 %>% glimpse()
+```
+
+```{r}
+stattab <- list(
+      `_Size` = ~sum(!is.na(.x)) %>% as.character(),
+      `_Average` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `_95% conf int average` = ~ifelse(sum(!is.na(.x)) < 3, "Мало данных", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `_Stand dev` = ~ifelse(sum(!is.na(.x)) < 3, "Мало данных", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `_Median` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `_Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
+)
 ```
 
 
 ```{r}
-
-#рассчитаем среднее по исследуемым показателям для каждой недели гестации, видим выбросы, которые стоит почистить (case 576,766, 196 и др)
-
 D2005_2014 %>% 
-  select(gest, LB, WB, brain, heart, lung, liver, spleen, kidney, thymus, adrenal, pancreas, placenta, HC, CC) %>%   group_by(`gest`) %>% 
-  summarise (across(where(is.numeric), function(x) mean (x, na.rm =T))) %>% 
-  round(1)
+  select(`gest`, where(is.double) & !`case`) %>%
+  group_by(`gest`) %>% 
+  summarise (across(where(is.double), stattab)) %>% 
+  pivot_longer(!`gest`) %>%
+  separate(name, into = c("Переменная", "Статистика"), sep = "__") %>%
+  rename(`Значение` = value, `Гестация (нед)` = gest) %>%
+  flextable() %>%
+  theme_box() %>%
+  merge_v(c("Гестация (нед)","Переменная"))
 
 #.....to be continued
 ```
