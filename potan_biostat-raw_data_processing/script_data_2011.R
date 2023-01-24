@@ -1,15 +1,3 @@
----
-title: '2011'
-author: "Кульгаева А."
-date: "`r Sys.Date()`"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r libraries}
 library(readxl)
 library(dplyr)
 library(tibble)
@@ -22,25 +10,15 @@ library(lubridate)
 library(readr)
 
 Sys.setlocale("LC_CTYPE", "russian")
-```
 
-```{r data, include=FALSE}
 dat_11 <- read_excel("Data/Raw/2011.xlsx", col_names = TRUE)
-```
 
-Предподготовка
-```{r}
-#dat_11 %>% glimpse()
+#Предподготовка
 
 wd_11 <- dat_11
 names(wd_11) <- c("case","gender","still_live","ag","gest","LB","WB","brain","heart","lung","liver","spleen","kidney","thymus","adrenal","pancreas","placenta","mac","CM","MP","IUGR","HC","CC")
 
-#table(wd_11$case)
-#table(wd_11$gender)
-
 wd_11 <- wd_11 %>% mutate(gender = ifelse(gender == "ж", "f" , "m"))
-
-#table(wd_11$still_live)
 
 #ед сердцебиен???
 
@@ -48,24 +26,13 @@ wd_11 <- wd_11 %>% mutate(ag = ifelse(still_live %in% c("мертв","мертв
   mutate(ag = ifelse(is.na(ag) == T, still_live, ag)) %>%
   mutate(still_live = ifelse(still_live %in% c("мертв","мертвый","мёртвый","мёритвый","интранатальная гибель плода"),"still","live"))
 
-#table(wd_11$ag)
-
 wd_11 <- wd_11 %>% mutate(ag = ifelse(ag %in% c("живой", "живший","жив", "живш"), NA , ag))
-
-#table(wd_11$gest)
-#table(wd_11$mac)
 
 wd_11 <- wd_11 %>% mutate(mac = ifelse(mac == "да", "yes" , "no"))
 
-#table(wd_11$CM)
-
 wd_11 <- wd_11 %>% mutate(CM = CM %>% replace_na("no"), CM = ifelse(CM == "нет", "no",CM))
 
-#table(wd_11$MP)
-
-wd_11 <- wd_11 %>% mutate(MP = MP %>% replace_na("no")) %>% mutate(MP = ifelse(MP == "да","yes","no")) 
-
-#table(wd_11$IUGR)
+wd_11 <- wd_11 %>% mutate(MP = MP %>% replace_na("no")) %>% mutate(MP = ifelse(MP == "да","yes","no"))
 
 wd_11 <- wd_11 %>% mutate(IUGR =  IUGR %>% as.character() %>% replace_na("no"))
 
@@ -75,17 +42,13 @@ wd_11 <- wd_11 %>% mutate(year =  2011)
 
 wd_11 <- wd_11 %>% mutate(across(c(case, gest, LB, WB,brain, heart,lung,liver,spleen, kidney, thymus, adrenal, pancreas, placenta, HC, CC), ~ as.numeric(.x)), across(c(gender, still_live, mac, MP), ~ as.factor(.x)))
 
-#wd_11 %>% glimpse()
 
-```
+#Фильтрация
 
-Фильтрация
-```{r }
 wd_11 <- wd_11 %>%
   filter (is.na(case) == FALSE) %>% #без протокола
   filter(gender %in% c("m","f")) #без пола
 
-#table(wd_11$ag)
 wd_11$ag <- gsub(",", ".", wd_11$ag)
 
 wd_11$ag <- gsub("лет", "г", wd_11$ag)
@@ -131,7 +94,7 @@ wd_11$ag <- gsub("д", "day", wd_11$ag)
 
 wd_11 <- wd_11 %>% mutate(Age = ifelse(still_live == "live",duration(wd_11$ag), 0))
 wd_11 <- wd_11 %>% mutate(Age_1 = strsplit(as.character(Age), 's')) %>%
-  mutate(Age_1 = sapply(Age_1, head, 1)) 
+  mutate(Age_1 = sapply(Age_1, head, 1))
 wd_11 <- wd_11 %>%  add_column(age_days = as.numeric(wd_11$Age_1), .after = 4)
 wd_11$age_days <- round(wd_11$age_days/86400,4)
 
@@ -146,5 +109,3 @@ wd_11 <- wd_11 %>% filter (gest >= 14) %>%  #гестация < 14
   filter (IUGR == "no") #СЗРП
 
 write_rds(wd_11,"Data/Nastya_clean_data/2011.rds")
-```
-54
