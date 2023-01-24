@@ -57,16 +57,13 @@ Data_step1 <- Data_en %>%
 #на данном этапе остается 831 наблюдений
 
 ```
-
 ```{r}
 # Фильтрация по переменным "gest", "mac", "CM", "MP", IUGR 
-
 table(Data_step1$gest, useNA = "always") # 1 наблюдение <14 недель  
-table(Data_step2$mac, useNA = "always") #556 наблюдений без мацерации 
-table(Data_step2$CM, useNA = "always") # из оставшихся токлько 397 без CM (NA и нет)
-table(Data_step2$IUGR, useNA = "always") # из них 394 без IUGR
-table(Data_step2$MP, useNA = "always") # 357 одноплодных
-
+table(Data_step1$mac, useNA = "always") #556 наблюдений без мацерации 
+table(Data_step1$CM, useNA = "always") # из оставшихся токлько 397 без CM (NA и нет)
+table(Data_step1$IUGR, useNA = "always") # из них 394 без IUGR
+table(Data_step1$MP, useNA = "always") # 357 одноплодных
 
 Data_step2 <- Data_step1 %>% 
   filter(!is.na(gest) & as.numeric(gest)>=14) %>% # фильтрация по неделям гестации 
@@ -79,20 +76,14 @@ Data_step2 <- Data_step1 %>%
 summary(Data_step2$WB)
 Data_step2$WB > 5000
 Data_step2$WB <- as.numeric(Data_step2$WB)
-
 Data_step2 <- Data_step2 %>% 
 filter (WB <= 5000)
 summary(Data_step2$WB) # 356
-
 #приводим still_live к бинарному виду (мертворожденный-0, живорожденный -1
-
 Data_step2 <- Data_step2 %>% 
    mutate(still_live = ifelse(age_days == 0, "still", "live"))
 Data_step2$still_live <- as.factor(Data_step2$still_live)
-
 ```
-
-
 ```{r}
 table (Data_step2$still_live,  useNA = "always")
 table (Data_step2$mac,  useNA = "always")
