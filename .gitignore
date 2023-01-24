@@ -45,3 +45,5 @@ vignettes/*.pdf
 *.xlsx
 *.RData
 *.rds
+
+.idea/
