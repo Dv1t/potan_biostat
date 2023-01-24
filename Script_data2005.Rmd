@@ -90,10 +90,8 @@ Data_step1$age_days <- dd$time_seconds
 Data_step1 <- Data_step1 %>% 
     filter(as.numeric(age_days) <= (86400)) # на данном этапе остается 692 наблюдений
 ```
-
 ```{r}
 # Фильтрация по переменным "gest", "mac", "CM", "MP", IUGR 
-
 table(Data_step1$mac, useNA = "always") #удаляем 227 "да" и 7 NA
 table(Data_step1$CM, useNA = "always") # из оставшихся токлько 227 без CM
 table(Data_step1$IUGR, useNA = "always") # из оставшихся 226 без IUGR
@@ -101,26 +99,24 @@ table(Data_step1$MP, useNA = "always") # из оставшихся токльк�
 table(Data_step1$gest, useNA = "always") #3NA
 summary(Data_step1$WB)
 
-table(Data_step2$CM, useNA = "always")
-table(Data_step2$IUGR, useNA = "always")
-table(Data_step2$MP, useNA = "always")
-table(Data_step2$MP, useNA = "always")
-
 Data_step2 <- Data_step1 %>% 
   filter(mac == "нет") %>% 
   filter(CM == "нет") %>% 
   filter(is.na(IUGR)) %>% 
   filter(MP=="нет") 
-
-
+  
 Data_step2$WB <- as.numeric(Data_step2$WB)
 summary(Data_step2$WB) #удаляем значений веса более 5000 г (-2)
 
 Data_step2 <- Data_step2 %>% 
   filter(WB <= 5000) #итого 205 наблюдений
 
-
+table(Data_step2$CM, useNA = "always")
+table(Data_step2$IUGR, useNA = "always")
+table(Data_step2$MP, useNA = "always")
+table(Data_step2$MP, useNA = "always")
 ```
+
 ```{r}
 #удаляем колонку age
 Data_step2 <- Data_step2[,-5]
