@@ -18,10 +18,14 @@ library(tibble)
 library(psych)
 library(tidyr)
 library(flextable)
+library(openxlsx)
+library(ggplot2)
+#library(ggstatsplot)
+library(ggpubr)
 #library(lubridate)
 ```
 
-Подгрузка данных и приводим типы данных к единообразию
+Подгрузка данных, приводим типы данных к единообразию
 
 ```{r separ_data}
 D2005 <- read_rds ("Data/Processed/D2005.rds")
@@ -85,7 +89,7 @@ D2005_2014 <-  bind_rows(D2005) %>% bind_rows(D2006) %>% bind_rows(D2007) %>% bi
 
 ```
 
-```{r}
+```{r data_check}
 #summary (D2005_2014)
 #D2005_2014 %>% glimpse()
 
@@ -105,30 +109,176 @@ D2005_2014 <- D2005_2014 %>%
 #D2005_2014 %>% glimpse()
 ```
 
-```{r}
+Список выбросов (неделя гестации: случай - год - причина ID)
+20: 773-2008-сердце 487, 354-2012-мозг 1372
+22: 1002-2013-сердце 1602, 150-2006-надпочечники 133
+23: 639-2010-мозг 1121, 152-2010-сердце 938, 535-2010-сердце 1080, 725-2010-сердце 1151, 1253-2013-лёгкие 1633, 593-2010-почки 1109, 1237-2013-надпочечники 1632, 394-2012-плацента 1379
+24: 930-2011-масса тела 1287, 522-2010-сердце 1075, 515-2010-печень 1071, 656-2007-поджелудочная 321
+25: 776-2009-селезенка 766, 502-2008-селезенка 439, 776-2010-почки 1167, 181-2005-тимус 31, 24-2005-ПЖ 6, 61-2008-плацента 381, 790-2010-плацента 1175, 470-2005-плацента 56, 233-2009-селезенка 604, 928-2007-селезенка 367, 80-2007-селезенка 228
+26: 761-2008-сердце 483, 131-2007-сердце 234, 530-2005-сердце 68, 340-2008-селезенка 412, 761-2008-селезенка 483, 398-2012-плацента 1380
+27: 510-2010-масса тела 1067, 35-2010-сердце 888, 18-2008-селезенка 377, 250-2009-селезенка 609, 320-2009-тимус 629, 290-2012-тимус 1358 395-2009-надпочечники 654
+29: 357-2007-масса тела 281, 
+30: 125-2013-мозг 1508, 976-2014-сердце 1728
+31: 484-2009-печень 680
+32: 1047-2014-печень 1741, 1021-2013-надпочечники 1605
+33: 887-2014-лёгкие и пж 1715, 901-2010-тимус 1463
+34: 206-2007-масса тела 250, 119-2010-сердце 924, 724-2013-тимус 1577, 626-2012-пж 1429, 449-2008-селезенка 433
+35: 732-2005-легкие 99 
+36: 546-2010-селезенка 1086
+37: 469-2013-селезенка 1553
+38: 281-2013-сердце 1524
+39: 72-2010-сердце 901, 743-2009-селезенка 749 
+
+```{r outliers}
+`%notin%` <- Negate(`%in%`)
+
+D2005_2014 <- D2005_2014 %>% mutate(ID = 1:nrow(D2005_2014)) %>%
+  filter(ID %notin% c(487, 1327, 1602, 133, 1121, 938, 1080, 1151, 1633, 1109, 1632, 1379, 1287, 1075, 1071, 321, 766, 439, 1167, 31, 6, 381, 1175, 56, 604, 367, 228, 483, 234, 68, 412, 483, 1380, 1067, 888, 377, 609, 629, 1358, 654, 281, 1508, 1728, 680, 1741, 1605, 1715, 1463, 250, 924, 1577, 1429, 433, 99, 1086, 1553, 1524, 901, 749)) %>%
+  mutate(ID = NULL)
+
+```
+
+
+```{r data_for_calcul, include=FALSE}
+D2005_2014 %>% 
+  select(`gest`, where(is.double) & !`case`) %>% write.xlsx("Data/Processed/D2005_D2014_full.xlsx", colNames = TRUE)
+```
+
+
+```{r functions}
 stattab <- list(
       `_Size` = ~sum(!is.na(.x)) %>% as.character(),
-      `_Average` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
-      `_95% conf int average` = ~ifelse(sum(!is.na(.x)) < 3, "Мало данных", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `_Mean` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+#      `_95% conf int mean` = ~ifelse(sum(!is.na(.x)) < 3, "Мало данных", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
       `_Stand dev` = ~ifelse(sum(!is.na(.x)) < 3, "Мало данных", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
       `_Median` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
       `_Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
 )
+
+mean_dev <- list(
+      `_Mean` = ~ifelse(sum(!is.na(.x)) == 0, "Мало данных", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `_Stand dev` = ~ifelse(sum(!is.na(.x)) < 3, "Мало данных", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character())
+)
 ```
 
+```{r descriptive_stat}
 
-```{r}
-D2005_2014 %>% 
+D2005_2014 %>%
   select(`gest`, where(is.double) & !`case`) %>%
-  group_by(`gest`) %>% 
+  group_by(`gest`) %>%
   summarise (across(where(is.double), stattab)) %>% 
   pivot_longer(!`gest`) %>%
-  separate(name, into = c("Переменная", "Статистика"), sep = "__") %>%
+  separate(name, into = c("Морфометрический показатель", "Статистика"), sep = "__") %>%
   rename(`Значение` = value, `Гестация (нед)` = gest) %>%
   flextable() %>%
   theme_box() %>%
-  merge_v(c("Гестация (нед)","Переменная"))
+  merge_v(c("Гестация (нед)","Морфометрический показатель"))
 
-#.....to be continued
 ```
 
+```{r data_for_compare, include=FALSE}
+aver_dat <- D2005_2014 %>% 
+  select(`gest`, where(is.double) & !`case`) %>%
+  group_by(`gest`) %>% 
+  summarise (across(where(is.double), mean_dev)) %>%
+  write.xlsx("Data/Processed/D2005_D2014_mean.xlsx", colNames = TRUE)
+```
+
+Сравнение с другими авторами
+
+```{r authors, message=FALSE, warning=FALSE}
+author_compare <- read_excel("Data/Processed/D2005_D2014_authors.xlsx")
+author_compare <- author_compare %>% mutate(Authors = Authors %>% as.factor(), across(where(is.character), as.numeric))
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= LB__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Длинна тела (см)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= WB__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса тела (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= brain__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса мозга (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= heart__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса сердца (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= lung__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса легких (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= liver__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса печени (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= spleen__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса селезенки (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= kidney__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса почек (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= thymus__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса вилочковой железы (г)')
+
+author_compare %>% 
+  ggplot(aes(x = gest, y= adrenal__Mean, color = Authors, fill = Authors)) + 
+  geom_point(aes(alpha = 0.6, size = 1.5)) +
+  theme_minimal() + 
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса надпочечников (г)')
+
+```
+
+Вайолин+боксплот органы по неделям гестации
+
+```{r warning=FALSE}
+D2005_2014 %>%
+  select(`gest`, where(is.double) & !`case`) %>%
+  ggplot(aes(x = gest, y = LB)) +
+  geom_violin(aes(fill = gest)) +
+  geom_boxplot(width=0.1, fill='white') +
+  theme_minimal()
+```
