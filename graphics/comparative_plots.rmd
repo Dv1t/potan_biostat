@@ -1,0 +1,231 @@
+---
+title: "Data processing"
+author: "Group Morph2"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+Sys.setlocale("LC_CTYPE", "russian")
+```
+
+```{r libraries, include=FALSE}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+```
+
+Сравнение с литературными источниками
+
+```{r authors, message=FALSE, warning=FALSE}
+author_compare <- read_excel("D2005_D2014_authors.xlsx")
+author_compare <- author_compare %>% mutate(Authors = Authors %>% as.factor(), across(where(is.character), as.numeric))
+
+author_compare %>%
+  ggplot(aes(x = gest, y= LB__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Длинна тела (см)')
+ggsave('LB.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= WB__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса тела (г)')
+ggsave('WB.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= brain__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса мозга (г)')
+ggsave('brain.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= heart__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса сердца (г)')
+ggsave('hear.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= lung__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса легких (г)')
+ggsave('lung.png')
+
+
+author_compare %>%
+  ggplot(aes(x = gest, y= liver__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса печени (г)')
+ggsave('liver.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= spleen__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса селезенки (г)')
+ggsave('spleen.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= kidney__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса почек (г)')
+ggsave('kidney.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= thymus__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса вилочковой железы (г)')
+ggsave('thymus.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= adrenal__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса надпочечников (г)')
+ggsave('adrenal.png')
+```
+
+Сравнение с "калькулятором"
+
+```{r authors, message=FALSE, warning=FALSE}
+author_compare <- read_excel("final_table_biost.xlsx")
+author_compare <- author_compare %>% 
+  filter(Authors %in% c('Morph2', 'Calc')) %>% 
+  mutate(Authors = Authors %>% as.factor(), across(where(is.character), as.numeric))
+
+author_compare %>%
+  ggplot(aes(x = gest, y= LB__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Длинна тела (см)')
+ggsave('LB.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= WB__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса тела (г)')
+ggsave('WB.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= brain__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса мозга (г)')
+ggsave('brain.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= heart__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса сердца (г)')
+ggsave('hear.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= lung__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса легких (г)')
+ggsave('lung.png')
+
+
+author_compare %>%
+  ggplot(aes(x = gest, y= liver__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса печени (г)')
+ggsave('liver.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= spleen__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса селезенки (г)')
+ggsave('spleen.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= kidney__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса почек (г)')
+ggsave('kidney.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= thymus__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса вилочковой железы (г)')
+ggsave('thymus.png')
+
+author_compare %>%
+  ggplot(aes(x = gest, y= adrenal__Mean, color = Authors, fill = Authors)) +
+  geom_point(size = 4.5, alpha = 0.6) +
+  theme_minimal() +
+  geom_smooth(se = F , method = 'lm')  +
+  xlab('Неделя гестации') +
+  ylab('Масса надпочечников (г)')
+ggsave('adrenal.png')
+```
+
+Вайолин+боксплот органы по неделям гестации
+
+```{r warning=FALSE, message=FALSE}
+D2005_2014 <- read_excel("D:/Study/potan_biostat/Data/Processed/D2005_D2014_mean.xlsx")
+D2005_2014 %>%
+  select(`gest`, where(is.double) & !`case`) %>%
+  ggplot(aes(x = gest, y = LB)) +
+  geom_violin(aes(fill = gest)) +
+  geom_boxplot(width=0.1, fill='white') +
+  xlab('Неделя гестации') +
+  ylab('Длинна тела (см)')+
+  theme_minimal()
+ggsave('violins.png')
+```
+
