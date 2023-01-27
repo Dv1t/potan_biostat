@@ -205,4 +205,5 @@ f2 <- D2005_2014_row %>%
   ylab('Масса надпочечников (г)') + labs(title = 'До чистки')
 
 ggarrange(f2,f1, ncol = 1, nrow = 2)
+ggsave('violins.png')
 ```
