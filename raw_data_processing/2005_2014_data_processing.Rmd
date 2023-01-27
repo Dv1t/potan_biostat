@@ -20,6 +20,7 @@ library(tidyr)
 library(flextable)
 library(openxlsx)
 library(ggplot2)
+library(ggpubr)
 ```
 
 Подгрузка данных, приводим типы данных к единообразию
@@ -95,12 +96,12 @@ D2005_2014 <-  bind_rows(D2005) %>% bind_rows(D2006) %>% bind_rows(D2007) %>% bi
 # для анализа сроки гестации берем 20-42 неделя
 # убираем строки с выбросами в колонке "селезёнка" (и не только)
 
-D2005_2014 <- D2005_2014 %>% 
+D2005_2014_row <- D2005_2014 %>% 
   mutate(age_days = ifelse(still_live == 'live', 1, 0) %>% as.factor(), year = year %>% as.factor()) %>%
   filter (mac != "yes") %>%
-  filter(gest >=20 & gest <= 42) %>%
-  mutate(gest = gest %>% as.factor()) %>%
-  filter (spleen < 1000)
+  filter(gest >=20 & gest <= 42)%>%
+  mutate(gest = gest %>% as.factor()) %>%  filter (spleen < 1000) 
+
 
 #summary (D2005_2014)
 #D2005_2014 %>% glimpse()
@@ -126,10 +127,11 @@ D2005_2014 <- D2005_2014 %>%
 38: 281-2013-сердце 1524
 39: 72-2010-сердце 901, 743-2009-селезенка 749 
 
+
 ```{r outliers}
 `%notin%` <- Negate(`%in%`)
 
-D2005_2014 <- D2005_2014 %>% mutate(ID = 1:nrow(D2005_2014)) %>%
+D2005_2014 <- D2005_2014_row %>% mutate(ID = 1:nrow(D2005_2014_row)) %>%
   filter(ID %notin% c(487, 1372, 1602, 133, 1121, 938, 1080, 1151, 1633, 1109, 1632, 1379, 1287, 1075, 1071, 321, 766, 439, 1167, 31, 6, 381, 1175, 56, 604, 367, 228, 483, 234, 68, 412, 483, 1380, 1067, 888, 377, 609, 629, 1358, 654, 281, 1508, 1728, 680, 1741, 1605, 1715, 1463, 250, 924, 1577, 1429, 433, 99, 1086, 1553, 1524, 901, 749)) %>%
   mutate(ID = NULL)
 
@@ -179,4 +181,28 @@ aver_dat <- D2005_2014 %>%
   group_by(`gest`) %>% 
   summarise (across(where(is.double), mean_dev)) %>%
   write.xlsx("Data/Processed/D2005_D2014_mean.xlsx", colNames = TRUE)
+```
+
+Вайолин+боксплот до/после чистки
+
+```{r warning=FALSE}
+f1 <- D2005_2014 %>%
+  select(`gest`, where(is.double) & !`case`) %>%
+  ggplot(aes(x = gest, y = adrenal)) +
+  geom_violin(fill = 'cornflowerblue') +
+  geom_boxplot(width=0.1, fill='white') +
+  theme_minimal() +
+  xlab('Неделя гестации') +
+  ylab('Масса надпочечников (г)') + labs(title = 'После чистки')
+
+f2 <- D2005_2014_row %>%
+  select(`gest`, where(is.double) & !`case`) %>%
+  ggplot(aes(x = gest, y = adrenal)) +
+  geom_violin(fill = 'darkolivegreen1') +
+  geom_boxplot(width=0.1, fill='white') +
+  theme_minimal() +
+  xlab('Неделя гестации') +
+  ylab('Масса надпочечников (г)') + labs(title = 'До чистки')
+
+ggarrange(f2,f1, ncol = 1, nrow = 2)
 ```
