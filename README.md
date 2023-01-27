@@ -1,56 +1,52 @@
-# Морфометрические критерии оценки перинатальных потерь
+# CALCULATE REFERENCE VALUES OF MORPHOMETRIC PARAMETERS WITH R IN PERINATAL PERIOD OF HUMAN DEVELOPMENT
 
 ---
 
-Авторы:
+Authors:
 
-- Кристина Жур
-- Виталий Дравгелис
-- Анастасия Кульгаева
-- Надежда Цурикова
+- K. Zhur
+- V. A. Dravgelis
+- A.I. Kulgaeva
+- N. Tsurikova
 
-Кураторы:
+Curators:
 
-- Дмитрий Жакота
-- Матвей Славенко
+- D.A. Zhakota
+- M. Slavenko
 
-## Цель
+## The aim of the study
 
-Целью данного исследования было установление референсных значений для морфометрических параметров характеристики плода.
+To create a script in the R programming language for the formation of morphometric parameters reference values from the original Excel file template. The result of the script should be presented in the form of tables and graphs.
 
-## Введение
+## Objective
 
-Для каждого периода развития организма человека на стадии эмбриона, плода и новорожденного характерны свои морфометрические особенности размеров тела, а также весовых параметров внутренних органов. На практике врачи сравнивают полученные результаты измерений с табличными показателями – отражающими средние значения исследуемых параметров для конкретного региона. Неонатологи на основе соответствия измеренных показателей табличным значениям оценивают степень развития и зрелости плода, что определяет вероятность возникновения различного рода заболеваний новорожденных и позволяет спрогнозировать их тяжесть и длительность, а также обосновать необходимость проведения соответствующих профилактических мероприятий.  Патологоанатомы на основании таких сравнений делают заключение о зрелости плода и формулируют заключительный патологоанатомический диагноз. Проблема существующих табличных значений заключается в том, что они получены в исследованиях с использованием различных критериев включения\исключения в исследование, с применением различных подходов к определению гестационного возраста, на устаревших приборах …. [1-3].
+Each period of development of a human embryo, fetus and newborn baby is characterized by its own morphometric features of body size and internal organs, as well as their weight parameters. In clinical practice, obstetricians-gynecologists and neonatologists draw conclusions about the development and degree of maturity, as well as the predicted risks of developing a variety of diseases of various genesis, in a human embryo, fetus, and newborn child based on the available reference values. Due to the presence of references on the development of the embryo and fetus, as well as dynamic control over the development of the embryo and fetus, clinicians justify the need for additional examinations and preventive measures, and pathologists make a conclusion about the maturity of the fetus and formulate a final pathoanatomical diagnosis. Morphometric data is collected and updated periodically in all countries [1-3]. No such studies have been conducted in the Russian Federation.
 
-## Методы
+## Methods
 
-Данные были ретроспективно собраны из записей последовательных фетальных и перинатальных аутопсий, выполненных в патоанатомическом отделении педиатрического профиля (Москва, Россия) в период с 2005 по 2014 годы (протоколы аутопсий). Всего для данного исследования было проанализировано 2000 протоколов вскрытия, 500 из них были полностью исключены из исследования, чтобы минимизировать аномалии, присутствующие в выборочной совокупности. Были исключены следующие диагнозы: (1) хромосомные аномалии, (2) врожденные пороки развития, (3) отсутствие отчетов о вскрытии, (4) отсутствие значения пола, (5) срок беременности < 20 недель, (6) гестационный возраст > 42 недель, (7) неопределенный гестационный возраст, (8) живорождение > 24 часов, (9) многоплодная беременность, (10) вирусные инфекции, (11) внутриутробная задержка роста (ВЗР), (12) мацерация или (13) скелетная дисплазия. Все полученные данные были объединены в единый набор данных. Сюда вошли плоды мужского и женского пола, мертворожденные и живорожденные. Объектом анализа служили следующие данные: масса тела, рост тела, окружность головы, окружность груди, масса внутренних органов (мозг, легкие, печень, почки, поджелудочная железа, сердце, тимус, селезенка, надпочечники, плацента).
+Retrospective monocentric cohort study was performed. Data was collected from the 10639 records of consecutive fetal and perinatal autopsies performed at the pathoanatomical department of pediatric profile (Moscow, Russia) between 2005 and 2014 years (autopsy protocols).  General exclusion criteria were: (1) chromosomal abnormalities, (2) congenital malformations, (3) missing, (4) gestational age < 20 weeks, (5) gestational age >42 weeks, (6) inconclusive gestational age, (7) live-birth > 24 hours, (8) multiple gestation, (9) infections, (10) intrauterine growth retardation (IUGR), (11) maceration. All of the data extracted were pooled into a single data set. This included male and female fetuses, stillbirths and livebirths. The following data served as the object of analysis: body weight, body height, head circumference, chest circumference, weight of internal organs (brain, lung, liver, kidney, pancreas, heart, thymus, spleen, adrenal, placenta). The sample population that was used in this study is truly representative of the mixed population present in Russian society.
 
-## Описание репозитория
+## Repository description
 
-В папке *raw_data_processing* находятся скрипты, которые были использованы для загрузки, предобработки и фильтрации исходных данных. Срипты *script_data_20\*\** отвечают за работу с сырыми данными соответствующего года. Документ *2005_2014_data_processing.Rmd* объединяет результат работы этих скриптов.
+The *raw_data_processing* folder contains the scripts that were used to load, preprocess and filter the raw data. The *script_data_20\*\** scripts are responsible for working with the raw data of the corresponding year. The document *2005_2014_data_processing.Rmd* combines the result of these scripts and plots violin plots for data. *graphics* folder contains script *comparative_plots.rmd*, which is responsible for visualising all comparative plots.
 
-## Статистический анализ
+## Statistical analysis
 
-Весь статистический анализ для данного исследования проводился с использованием программного обеспечения R (версия: 4.2.2) и Reference Value Advisor v2.1 (набор макроинструкций для расчета референсных интервалов в Microsoft Excel) [4].
+Data analysis for this study was performed using R software (version: x64 4.2.2) [4] and Reference Value Advisor v2.1 (set of macroinstructions to calculate reference intervals with Microsoft Excel) [5].
 
-## Результаты
+## Results
 
-Для данного исследования было проанализировано 1116 протоколов вскрытия. Среди них было 500 (47,9%) женщин и 500 (52,1%) мужчин. Референсные диапазоны, включающие среднее значение и стандартное отклонение (SD), 5-й, 50-й и 95-й процентили для каждого параметра в каждом гестационном возрасте, были получены с помощью программного обеспечения R и программы Reference Value Advisor v2.1.
+A total of 1695 post-mortem examination reports were analysed for this study. There were 805 (47.5%) females and 890 (52.5%) males. Reference ranges comprising mean and standard deviation (SD), 25th, 50th and 75th percentiles for each parameter at each gestational age have been produced using R software and Reference Value Advisor v2.1. The obtained results (mean and standard deviation) were verified by comparison reference values that were calculated using our script 1) with reference values that were computed with Reference Value Advisor V2.1 on the same set of data and 2) with reference values that were developed by Sung, by Bartosch et al. for the Portuguese populations and by Phillips et al. for the Australian populations, respectively [2,3,6]. Comparison of reference values was made graphically by using line charts. The trends of the charts were consistent and did not have pronounced deviations from each other for all of the compared characteristics.
 
-## Выводы
+## Сonclusion
 
-to be continued...
+The obtained morphometric parameters reference values are in agreement with the literature data and with the results of proprietary software. Our R script that was developed using open-source software allows the user to automate data cleaning, formation of reference values and generation of summary tables and graphs according to generally accepted standards.
 
-## Цитирование
-
-Если вы используете данные из этого исследования в своей статье, то пожалуйста цитируйте:
-
-[Ссылка на будующую статью](https://www.com)
-
-## Список использованных источников
+## References
 
 1. Archie JG, Collins JS, Lebel RR. Quantitative standards for fetal and neonatal autopsy. Am J Clin Pathol. 2006 Aug;126(2):256-65. doi: 10.1309/FK9D-5WBA-1UEP-T5BB. PMID: 16891202.
 2. Bartosch C, Vilar I, Rodrigues M, Costa L, Botelho N, Brandão O. Fetal autopsy parameters standards: biometry, organ weights, and long bone lengths. Virchows Arch. 2019 Oct;475(4):499-511. doi: 10.1007/s00428-019-02639-0. Epub 2019 Aug 16. PMID: 31420733.
 3. Phillips JB, Billson VR, Forbes AB. Autopsy standards for fetal lengths and organ weights of an Australian perinatal population. Pathology. 2009;41(6):515-26. doi: 10.1080/00313020903041093. PMID: 19588281.
-4. Geffré A, Concordet D, Braun JP, Trumel C. Reference Value Advisor: a new freeware set of macroinstructions to calculate reference intervals with Microsoft Excel. Vet Clin Pathol. 2011 Mar;40(1):107-12. doi: 10.1111/j.1939-165X.2011.00287.x. Epub 2011 Feb 7. PMID: 21366659.
+4. R Core Team (2022). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria.  URL https://www.R-project.org/.
+5. Geffré A, Concordet D, Braun JP, Trumel C. Reference Value Advisor: a new freeware set of macroinstructions to calculate reference intervals with Microsoft Excel. Vet Clin Pathol. 2011 Mar;40(1):107-12. doi: 10.1111/j.1939-165X.2011.00287.x. Epub 2011 Feb 7. PMID: 21366659.
+6. Sung CJ, Singer DB. Compiled 1st October 1988 with 1975–1984 data from Women and Infants' Hospital, Providence, Rhode Island. In: Stocker JT, Dehner LP, eds. Pediatric Pathology. Vol. 2. Philadelphia: Lippincott Williams & Wilkins, 2001;1436.
