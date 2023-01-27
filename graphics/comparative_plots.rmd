@@ -213,19 +213,3 @@ author_compare %>%
   ylab('Масса надпочечников (г)')
 ggsave('adrenal.png')
 ```
-
-Вайолин+боксплот органы по неделям гестации
-
-```{r warning=FALSE, message=FALSE}
-D2005_2014 <- read_excel("D:/Study/potan_biostat/Data/Processed/D2005_D2014_mean.xlsx")
-D2005_2014 %>%
-  select(`gest`, where(is.double) & !`case`) %>%
-  ggplot(aes(x = gest, y = LB)) +
-  geom_violin(aes(fill = gest)) +
-  geom_boxplot(width=0.1, fill='white') +
-  xlab('Неделя гестации') +
-  ylab('Длинна тела (см)')+
-  theme_minimal()
-ggsave('violins.png')
-```
-
